@@ -1,5 +1,4 @@
-// Agrega aquí los usings de los extension methods de tus bounded contexts, por ejemplo:
-// using Mindflow_backend.[BoundedContext].Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +13,6 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
-        // Aplica el interceptor de auditoría automático para todas las entidades que implementen IAuditableEntity
         builder.AddInterceptors(new AuditableEntityInterceptor());
         base.OnConfiguring(builder);
     }
@@ -24,10 +22,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(builder);
 
-        // Aquí agrega la configuración de cada bounded context de tu proyecto, por ejemplo:
-        // builder.ApplyMiBoundedContextConfiguration();
+        builder.ApplyHabitsConfiguration();
 
-        // Aplica la convención de nombres snake_case + pluralización para toda la base de datos
         builder.UseSnakeCaseNamingConvention();
     }
 }
