@@ -5,6 +5,11 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Cortex.Mediator.DependencyInjection;
 
+using Mindflow_backend.iam.domain.repositories;
+using Mindflow_backend.iam.infrastructure.persistence.entityframeworkcore.repositories;
+using Mindflow_backend.iam.application.services;
+using Mindflow_backend.iam.Application.Internal.Commandservices;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
@@ -13,6 +18,9 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 
 builder.Services.AddCors(options =>
 {
