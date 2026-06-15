@@ -1,0 +1,25 @@
+using Cortex.Mediator.Requests;
+using Mindflow_backend.Journal.Application.Commands;
+using Mindflow_backend.Journal.Domain.Entities;
+using Mindflow_backend.Shared.Application.Model;
+using Mindflow_backend.Shared.Domain.Repositories;
+
+namespace Mindflow_backend.Journal.Application.Handlers;
+
+public class DeleteJournalEntryHandler(
+    IBaseRepository<JournalEntry> repository,
+    IUnitOfWork unitOfWork) : IRequestHandler<DeleteJournalEntryCommand, Result>
+{
+    public async Task<Result> Handle(DeleteJournalEntryCommand request, CancellationToken ct)
+    {
+        var entry = await repository.FindByIdAsync(request.Id, ct);
+        if (entry is null)
+            return Result.Failure(
+                new Error("JournalEntry.NotFound", "Entry not found"), "Entry not found");
+
+        repository.Remove(entry);
+        await unitOfWork.CompleteAsync(ct);
+
+        return Result.Success();
+    }
+}
