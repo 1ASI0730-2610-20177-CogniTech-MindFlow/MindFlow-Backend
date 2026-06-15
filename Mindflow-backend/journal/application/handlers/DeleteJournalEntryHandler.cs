@@ -17,7 +17,8 @@ public class DeleteJournalEntryHandler(
             return Result.Failure(
                 new Error("JournalEntry.NotFound", "Entry not found"), "Entry not found");
 
-        repository.Remove(entry);
+        entry.DeletedAt = DateTimeOffset.UtcNow;
+        repository.Update(entry);
         await unitOfWork.CompleteAsync(ct);
 
         return Result.Success();

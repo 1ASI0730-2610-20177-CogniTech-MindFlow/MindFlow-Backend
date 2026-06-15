@@ -22,6 +22,7 @@ public class UpdateJournalEntryHandler(
         entry.Content = request.Content;
         entry.Sentiment = request.Sentiment;
         entry.Category = request.Category;
+        entry.HasPreview = request.Content.Length > 200; 
 
         repository.Update(entry);
         await unitOfWork.CompleteAsync(ct);

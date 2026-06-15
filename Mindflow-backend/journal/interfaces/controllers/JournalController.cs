@@ -14,9 +14,9 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
 {
     [HttpGet("entries")]
     public async Task<IActionResult> GetEntries(
-        [FromQuery] string? sort,
-        [FromQuery] string? order,
-        [FromQuery] int? limit)
+    [FromQuery(Name = "_sort")] string? sort,
+    [FromQuery(Name = "_order")] string? order,
+    [FromQuery(Name = "_limit")] int? limit)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
         var query = new GetJournalEntriesQuery
