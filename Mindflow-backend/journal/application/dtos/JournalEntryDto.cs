@@ -10,6 +10,7 @@ public class JournalEntryDto
     public string Sentiment { get; set; } = "neutral";
     public string Category { get; set; } = "Sin categoría";
     public bool HasPreview { get; set; }
+    public string? AiResponse { get; set; }
     public List<TagDto> Tags { get; set; } = [];
     public List<MediaDto> Media { get; set; } = [];
     public DateTimeOffset? CreatedAt { get; set; }
