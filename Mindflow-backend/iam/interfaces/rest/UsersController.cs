@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mindflow_backend.iam.application.services;
 using Mindflow_backend.iam.domain.model.commands;
@@ -35,5 +36,33 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
 
         var (user, token) = result.Value;
         return Ok(new AuthenticatedUserResource(user.Id, user.Email, token));
+    }
+
+    [HttpPut("profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileResource resource)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var command = new UpdateProfileCommand(userId, resource.Name, resource.Occupation);
+        var result = await userCommandService.Handle(command);
+
+        if (result.IsFailure)
+            return BadRequest(new { error = result.Message });
+
+        return Ok(UserResourceFromEntityAssembler.ToResourceFromEntity(result.Value!));
+    }
+
+    [HttpDelete]
+    [Authorize]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var command = new DeleteAccountCommand(userId);
+        var result = await userCommandService.Handle(command);
+
+        if (result.IsFailure)
+            return BadRequest(new { error = result.Message });
+
+        return NoContent();
     }
 }

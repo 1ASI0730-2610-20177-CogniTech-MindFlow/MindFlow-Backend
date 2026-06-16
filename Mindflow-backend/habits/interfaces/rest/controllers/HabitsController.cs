@@ -82,6 +82,24 @@ public class HabitsController : ControllerBase
         return HabitsActionResultAssembler.ToActionResultFromDeleteResult(this, result, _problemDetailsFactory);
     }
 
+    [HttpGet("streak-summary")]
+    public async Task<IActionResult> GetStreakSummary(CancellationToken cancellationToken)
+    {
+        var userId = GetAuthenticatedUserId();
+        var query = new GetAllHabitsByUserIdQuery(userId);
+        var habits = await _habitQueryService.Handle(query, cancellationToken);
+        var summary = habits
+            .OrderByDescending(h => h.Streak)
+            .Select(h => new
+            {
+                habitId = h.Id,
+                name = h.Name,
+                streak = h.Streak,
+                status = h.Status.ToString()
+            });
+        return Ok(summary);
+    }
+
     private int GetAuthenticatedUserId()
     {
         var claim = User.FindFirst("user_id");

@@ -16,7 +16,8 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetEntries(
     [FromQuery(Name = "_sort")] string? sort,
     [FromQuery(Name = "_order")] string? order,
-    [FromQuery(Name = "_limit")] int? limit)
+    [FromQuery(Name = "_limit")] int? limit,
+    [FromQuery(Name = "q")] string? q)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
         var query = new GetJournalEntriesQuery
@@ -24,7 +25,8 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
             UserId = userId,
             Sort = sort,
             Order = order,
-            Limit = limit
+            Limit = limit,
+            Q = q
         };
         var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);

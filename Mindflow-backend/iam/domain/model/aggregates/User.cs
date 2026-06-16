@@ -7,17 +7,19 @@ public partial class User : IAuditableEntity
 {
     public int Id { get; private set; }
     public string Email { get; private set; }
-    
+    public string? Name { get; private set; }
+    public string? Occupation { get; private set; }
+
     [JsonIgnore]
-    public string PasswordHash { get; private set; } 
+    public string PasswordHash { get; private set; }
 
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 
-    public User(string email, string passwordHash)
+    public User(string email, string password)
     {
         Email = email;
-        PasswordHash = passwordHash;
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
     }
 
     public User()
@@ -26,9 +28,16 @@ public partial class User : IAuditableEntity
         PasswordHash = string.Empty;
     }
 
-    public User UpdatePasswordHash(string passwordHash)
+    public User UpdatePasswordHash(string password)
     {
-        PasswordHash = passwordHash;
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+        return this;
+    }
+
+    public User UpdateProfile(string? name, string? occupation)
+    {
+        Name = name;
+        Occupation = occupation;
         return this;
     }
 }

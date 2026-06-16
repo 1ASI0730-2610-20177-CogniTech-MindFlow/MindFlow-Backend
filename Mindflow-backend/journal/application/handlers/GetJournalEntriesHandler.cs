@@ -19,6 +19,9 @@ public class GetJournalEntriesHandler(AppDbContext dbContext)
             .Include(e => e.EntryTags).ThenInclude(et => et.Tag)
             .Include(e => e.Media);
 
+        if (!string.IsNullOrWhiteSpace(request.Q))
+            query = query.Where(e => e.Title.Contains(request.Q) || e.Content.Contains(request.Q));
+
         bool ascending = request.Order?.ToLower() == "asc";
 
         query = (request.Sort?.ToLower()) switch

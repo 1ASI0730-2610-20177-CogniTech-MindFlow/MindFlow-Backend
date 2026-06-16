@@ -10,4 +10,5 @@ public class GetJournalEntriesQuery : IQuery<Result<IEnumerable<JournalEntryDto>
     public string? Sort { get; set; }
     public string? Order { get; set; }
     public int? Limit { get; set; }
+    public string? Q { get; set; }
 }

@@ -8,4 +8,6 @@ public interface IUserCommandService
 {
     Task<Result<User>> Handle(SignUpCommand command);
     Task<Result<(User User, string Token)>> Handle(SignInCommand command);
+    Task<Result<User>> Handle(UpdateProfileCommand command);
+    Task<Result> Handle(DeleteAccountCommand command);
 }

@@ -37,6 +37,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<User>().Property(u => u.Id).IsRequired().ValueGeneratedOnAdd();
         builder.Entity<User>().Property(u => u.Email).IsRequired().HasMaxLength(255);
         builder.Entity<User>().Property(u => u.PasswordHash).IsRequired();
+        builder.Entity<User>().Property(u => u.Name).HasMaxLength(100);
+        builder.Entity<User>().Property(u => u.Occupation).HasMaxLength(100);
         builder.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
         builder.Entity<JournalEntry>(entity =>
@@ -50,6 +52,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
                   .HasForeignKey(m => m.EntryId);
 
             entity.HasQueryFilter(e => e.DeletedAt == null);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.Date });
         });
 
         builder.Entity<Tag>(entity =>

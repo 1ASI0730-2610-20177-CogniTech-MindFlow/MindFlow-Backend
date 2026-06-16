@@ -11,15 +11,27 @@ public class CreateJournalEntryHandler(
     IBaseRepository<JournalEntry> repository,
     IUnitOfWork unitOfWork) : ICommandHandler<CreateJournalEntryCommand, Result<JournalEntryDto>>
 {
+    private static readonly string[] PositiveWords = ["feliz", "bien", "genial", "excelente", "alegre", "contento", "motivado", "logré", "happy", "great", "good", "amazing", "wonderful"];
+    private static readonly string[] NegativeWords = ["triste", "mal", "terrible", "ansioso", "estresado", "frustrado", "agotado", "sad", "bad", "stressed", "anxious", "exhausted", "frustrated"];
+
     public async Task<Result<JournalEntryDto>> Handle(CreateJournalEntryCommand request, CancellationToken ct)
     {
+        var sentiment = request.Sentiment;
+        if (string.IsNullOrWhiteSpace(sentiment))
+        {
+            var text = $"{request.Content} {request.Title}".ToLowerInvariant();
+            sentiment = PositiveWords.Any(text.Contains) ? "positive"
+                      : NegativeWords.Any(text.Contains) ? "negative"
+                      : "neutral";
+        }
+
         var entry = new JournalEntry
         {
             UserId = request.UserId,
             Date = request.Date,
             Title = request.Title,
             Content = request.Content,
-            Sentiment = request.Sentiment,
+            Sentiment = sentiment,
             Category = request.Category,
             HasPreview = request.Content.Length > 200
         };
