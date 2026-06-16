@@ -78,18 +78,32 @@ public class FcmNotificationService(
 
     private async Task<string?> GetAccessTokenAsync()
     {
-        var path = configuration["Firebase:ServiceAccountPath"];
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        GoogleCredential? credential = null;
+
+        var jsonContent = configuration["Firebase:ServiceAccountJson"];
+        if (!string.IsNullOrWhiteSpace(jsonContent))
         {
-            logger.LogDebug("Firebase service account not configured — push notifications disabled.");
-            return null;
+            try { credential = GoogleCredential.FromJson(jsonContent).CreateScoped(FcmScope); }
+            catch (Exception ex) { logger.LogWarning(ex, "Failed to load Firebase credential from JSON env var."); }
         }
 
-        try
+        if (credential is null)
         {
-            var credential = GoogleCredential.FromFile(path).CreateScoped(FcmScope);
-            return await ((ITokenAccess)credential).GetAccessTokenForRequestAsync();
+            var path = configuration["Firebase:ServiceAccountPath"];
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                logger.LogDebug("Firebase service account not configured — push notifications disabled.");
+                return null;
+            }
+            try { credential = GoogleCredential.FromFile(path).CreateScoped(FcmScope); }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to load Firebase credential from file.");
+                return null;
+            }
         }
+
+        try { return await ((ITokenAccess)credential).GetAccessTokenForRequestAsync(); }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to obtain Firebase access token.");
