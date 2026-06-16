@@ -2,6 +2,7 @@ using Cortex.Mediator.Requests;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Domain.Entities;
+using Mindflow_backend.Journal.Domain.Model;  
 using Mindflow_backend.Shared.Application.Model;
 using Mindflow_backend.Shared.Domain.Repositories;
 
@@ -16,7 +17,7 @@ public class UpdateJournalEntryHandler(
         var entry = await repository.FindByIdAsync(request.Id, ct);
         if (entry is null)
             return Result<JournalEntryDto>.Failure(
-                new Error("JournalEntry.NotFound", "Entry not found"), "Entry not found");
+                 JournalError.JournalEntryNotFound, "Entry not found");
 
         entry.Title = request.Title;
         entry.Content = request.Content;

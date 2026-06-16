@@ -4,6 +4,7 @@ using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Application.Queries;
 using Mindflow_backend.Journal.Domain.Entities;
 using Mindflow_backend.Shared.Application.Model;
+using Mindflow_backend.Journal.Domain.Model;  
 using Mindflow_backend.Shared.Domain.Model;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
@@ -22,8 +23,7 @@ public class GetJournalEntryByIdHandler(AppDbContext dbContext)
 
         if (entry is null)
             return Result<JournalEntryDto>.Failure(
-                new Error("JournalEntry.NotFound", "Entry not found"), "Entry not found");
-
+                JournalError.JournalEntryNotFound, "Entry not found");
         return Result<JournalEntryDto>.Success(Map(entry));
     }
 

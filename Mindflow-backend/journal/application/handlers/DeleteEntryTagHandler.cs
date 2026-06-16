@@ -2,6 +2,7 @@ using Cortex.Mediator.Requests;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Domain.Entities;
 using Mindflow_backend.Shared.Application.Model;
+using Mindflow_backend.Journal.Domain.Model;  
 using Mindflow_backend.Shared.Domain.Model;
 using Mindflow_backend.Shared.Domain.Repositories;
 
@@ -15,7 +16,8 @@ public class DeleteEntryTagHandler(
     {
         var entryTag = await repository.FindByIdAsync(request.Id, ct);
         if (entryTag is null)
-            return Result.Failure(new Error("EntryTag.NotFound", "Entry tag not found"), "Entry tag not found");
+             return Result.Failure(
+                JournalError.EntryTagNotFound, "Entry tag not found");   // <-- CAMBIO
 
         repository.Remove(entryTag);
         await unitOfWork.CompleteAsync(ct);
