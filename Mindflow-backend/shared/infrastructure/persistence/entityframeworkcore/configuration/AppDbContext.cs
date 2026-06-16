@@ -3,6 +3,8 @@
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
+using Mindflow_backend.Analytics.Domain.Entities;
+using Mindflow_backend.Analytics.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
 namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
@@ -11,6 +13,10 @@ namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore
 /// </summary>
 public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
+    public DbSet<AnalyticsCache> AnalyticsCaches => Set<AnalyticsCache>();
+    public DbSet<WordCloud> WordClouds => Set<WordCloud>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+
     /// <inheritdoc />
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
