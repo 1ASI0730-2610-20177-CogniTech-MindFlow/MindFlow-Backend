@@ -8,4 +8,5 @@ namespace Mindflow_backend.Analytics.Application.Queries;
 public class GetAnalyticsCacheQuery : IRequest<Result<List<AnalyticsCacheDto>>>
 {
     public int UserId { get; set; }
+    public DateOnly? WeekStart { get; set; }
 }
