@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Mindflow_backend.AiIntegration.Application.Services;
+using Mindflow_backend.AiIntegration.Infrastructure.Services;
 using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Journal.Application.Services;
 using Mindflow_backend.Journal.Infrastructure.Services;
@@ -113,6 +115,8 @@ builder.Services.AddScoped<IHabitLogCommandService, HabitLogCommandService>();
 builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
+builder.Services.AddHttpClient("Gemini");
+builder.Services.AddScoped<IAiService, GeminiService>();
 builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();

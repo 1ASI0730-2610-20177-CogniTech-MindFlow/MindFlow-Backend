@@ -45,6 +45,7 @@ public class GetJournalEntriesHandler(AppDbContext dbContext)
         Sentiment = e.Sentiment,
         Category = e.Category,
         HasPreview = e.HasPreview,
+        AiResponse = e.AiResponse,
         Tags = e.EntryTags?.Select(et => new TagDto
         {
             Id = et.Tag.Id,
