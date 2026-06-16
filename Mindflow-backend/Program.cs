@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mindflow_backend.Analytics.Application.Services;
+using Mindflow_backend.Subscriptions.Application.Services;
+using Mindflow_backend.Subscriptions.Infrastructure.Services;
 using Mindflow_backend.Journal.Application.Services;
 using Mindflow_backend.Journal.Infrastructure.Services;
 using Mindflow_backend.Habits.Application.Internal.CommandServices;
@@ -113,6 +115,7 @@ builder.Services.AddScoped<IHabitLogCommandService, HabitLogCommandService>();
 builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
+builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();
