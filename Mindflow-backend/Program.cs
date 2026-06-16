@@ -1,28 +1,25 @@
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Habits.Application.Internal.CommandServices;
 using Mindflow_backend.Habits.Application.Internal.QueryServices;
 using Mindflow_backend.Habits.Domain.Repositories;
 using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Repositories;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Cortex.Mediator.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Mindflow_backend.Analytics.Application.Services;
+using Mindflow_backend.iam.application.Internal.commandservices;
+using Mindflow_backend.iam.application.services;
+using Mindflow_backend.iam.domain.repositories;
+using Mindflow_backend.iam.infrastructure.persistence.entityframeworkcore.repositories;
+using Mindflow_backend.iam.infrastructure.services;
 using Mindflow_backend.Shared.Domain.Repositories;
 using Mindflow_backend.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Mindflow_backend.Shared.Interfaces.Rest.ProblemDetails;
-
-using Mindflow_backend.iam.domain.repositories;
-using Mindflow_backend.iam.infrastructure.persistence.entityframeworkcore.repositories;
-using Mindflow_backend.iam.application.services;
-using Mindflow_backend.iam.Application.Internal.Commandservices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,17 +28,12 @@ builder.Services.AddControllers(options =>
     options.Conventions.Add(new KebabCaseRouteNamingConvention()))
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
-        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
-    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 
 builder.Services.AddCors(options =>
 {
@@ -92,6 +84,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<ProblemDetailsFactory>();
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserCommandService, UserCommandService>();
+
 builder.Services.AddScoped<IHabitRepository, HabitRepository>();
 builder.Services.AddScoped<IHabitCompletionLogRepository, HabitCompletionLogRepository>();
 builder.Services.AddScoped<IHabitCommandService, HabitCommandService>();
@@ -99,7 +95,6 @@ builder.Services.AddScoped<IHabitLogCommandService, HabitLogCommandService>();
 builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
-builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<AnalyticsComputationService>();
 
 builder.Services.AddCortexMediator([typeof(Program)]);

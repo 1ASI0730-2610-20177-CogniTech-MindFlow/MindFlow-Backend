@@ -21,14 +21,14 @@ public sealed class AnalyticsController(
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
         var query = new GetAnalyticsCacheQuery { UserId = userId, WeekStart = weekStart };
-        var result = await mediator.Send(query);
+        var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
     [HttpPost("analyticsCache")]
     public async Task<IActionResult> CreateAnalyticsCache([FromBody] CreateAnalyticsCacheCommand command)
     {
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -36,7 +36,7 @@ public sealed class AnalyticsController(
     public async Task<IActionResult> UpdateAnalyticsCache(int id, [FromBody] UpdateAnalyticsCacheCommand command)
     {
         command.Id = id;
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -70,14 +70,14 @@ public sealed class AnalyticsController(
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
         var query = new GetWordCloudQuery { UserId = userId };
-        var result = await mediator.Send(query);
+        var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
     [HttpPost("wordCloud")]
     public async Task<IActionResult> CreateWordCloud([FromBody] CreateWordCloudCommand command)
     {
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 

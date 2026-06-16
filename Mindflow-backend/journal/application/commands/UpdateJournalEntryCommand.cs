@@ -1,10 +1,10 @@
-using Cortex.Mediator.Requests;
+using Cortex.Mediator.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Shared.Application.Model;
 
 namespace Mindflow_backend.Journal.Application.Commands;
 
-public class UpdateJournalEntryCommand : IRequest<Result<JournalEntryDto>>
+public class UpdateJournalEntryCommand : ICommand<Result<JournalEntryDto>>
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;

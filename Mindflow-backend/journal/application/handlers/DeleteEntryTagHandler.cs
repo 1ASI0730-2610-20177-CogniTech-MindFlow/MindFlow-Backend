@@ -1,4 +1,4 @@
-using Cortex.Mediator.Requests;
+using Cortex.Mediator.Commands;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Domain.Entities;
 using Mindflow_backend.Shared.Application.Model;
@@ -10,7 +10,7 @@ namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class DeleteEntryTagHandler(
     IBaseRepository<EntryTag> repository,
-    IUnitOfWork unitOfWork) : IRequestHandler<DeleteEntryTagCommand, Result>
+    IUnitOfWork unitOfWork) : ICommandHandler<DeleteEntryTagCommand, Result>
 {
     public async Task<Result> Handle(DeleteEntryTagCommand request, CancellationToken ct)
     {

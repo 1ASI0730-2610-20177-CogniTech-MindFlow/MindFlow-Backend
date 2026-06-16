@@ -1,4 +1,4 @@
-using Cortex.Mediator;
+using Cortex.Mediator.Queries;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Dtos;
 using Mindflow_backend.Analytics.Application.Queries;
@@ -10,7 +10,7 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 namespace Mindflow_backend.Analytics.Application.Handlers;
 
 public class GetAnalyticsCacheQueryHandler(AppDbContext dbContext)
-    : IRequestHandler<GetAnalyticsCacheQuery, Result<List<AnalyticsCacheDto>>>
+    : IQueryHandler<GetAnalyticsCacheQuery, Result<List<AnalyticsCacheDto>>>
 {
     public async Task<Result<List<AnalyticsCacheDto>>> Handle(GetAnalyticsCacheQuery request, CancellationToken ct)
     {

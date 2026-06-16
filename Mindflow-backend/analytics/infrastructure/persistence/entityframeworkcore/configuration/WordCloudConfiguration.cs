@@ -14,7 +14,7 @@ public class WordCloudConfiguration : IEntityTypeConfiguration<WordCloud>
         builder.Property(w => w.Id).ValueGeneratedOnAdd();
 
         builder.Property(w => w.UserId).IsRequired();
-        builder.Property(w => w.Words).HasColumnType("jsonb");
+        builder.Property(w => w.Words).HasColumnType("json");
 
         builder.HasIndex(w => w.UserId).IsUnique();
     }

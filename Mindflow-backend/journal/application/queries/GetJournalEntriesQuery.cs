@@ -1,10 +1,10 @@
-using Cortex.Mediator.Requests;
+using Cortex.Mediator.Queries;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Shared.Application.Model;
 
 namespace Mindflow_backend.Journal.Application.Queries;
 
-public class GetJournalEntriesQuery : IRequest<Result<IEnumerable<JournalEntryDto>>>
+public class GetJournalEntriesQuery : IQuery<Result<IEnumerable<JournalEntryDto>>>
 {
     public int UserId { get; set; }
     public string? Sort { get; set; }

@@ -1,32 +1,27 @@
-// Agrega aquí los usings de los extension methods de tus bounded contexts, por ejemplo:
-// using Mindflow_backend.[BoundedContext].Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
-using Mindflow_backend.Journal.Domain.Entities;
-using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Configuration;
-using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
-using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
-using Mindflow_backend.iam.domain.model.aggregates;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mindflow_backend.Analytics.Domain.Entities;
 using Mindflow_backend.Analytics.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
-
+using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Configuration;
+using Mindflow_backend.iam.domain.model.aggregates;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
+using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
+using EntryTag = Mindflow_backend.Journal.Domain.Entities.EntryTag;
+using Tag = Mindflow_backend.Journal.Domain.Entities.Tag;
+using Media = Mindflow_backend.Journal.Domain.Entities.Media;
 
 namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
-/// <summary>
-///     Application database context
-/// </summary>
 public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
+    public DbSet<User> Users => Set<User>();
     public DbSet<AnalyticsCache> AnalyticsCaches => Set<AnalyticsCache>();
     public DbSet<WordCloud> WordClouds => Set<WordCloud>();
-    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
-
-    /// <inheritdoc />
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<EntryTag> EntryTags => Set<EntryTag>();
     public DbSet<Media> Media => Set<Media>();
-
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -34,21 +29,15 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         base.OnConfiguring(builder);
     }
 
-    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        // Aquí agrega la configuración de cada bounded context de tu proyecto, por ejemplo:
-        // builder.ApplyMiBoundedContextConfiguration();
-        
-        // CONFIGURACIÓN DE BOUNDED CONTEXT (IAM)
         builder.Entity<User>().HasKey(u => u.Id);
         builder.Entity<User>().Property(u => u.Id).IsRequired().ValueGeneratedOnAdd();
         builder.Entity<User>().Property(u => u.Email).IsRequired().HasMaxLength(255);
         builder.Entity<User>().Property(u => u.PasswordHash).IsRequired();
         builder.Entity<User>().HasIndex(u => u.Email).IsUnique();
-        // Aplica la convención de nombres snake_case + pluralización para toda la base de datos
 
         builder.Entity<JournalEntry>(entity =>
         {
@@ -75,9 +64,28 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             entity.HasIndex(et => new { et.EntryId, et.TagId }).IsUnique();
         });
 
-
         builder.ApplyHabitsConfiguration();
+        builder.ApplyAnalyticsConfiguration();
 
         builder.UseSnakeCaseNamingConvention();
+
+        var dateOnlyConverter = new ValueConverter<DateOnly, DateTime>(
+            d => d.ToDateTime(TimeOnly.MinValue),
+            d => DateOnly.FromDateTime(d));
+
+        var nullableDateOnlyConverter = new ValueConverter<DateOnly?, DateTime?>(
+            d => d.HasValue ? d.Value.ToDateTime(TimeOnly.MinValue) : null,
+            d => d.HasValue ? DateOnly.FromDateTime(d.Value) : null);
+
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateOnly))
+                    property.SetValueConverter(dateOnlyConverter);
+                else if (property.ClrType == typeof(DateOnly?))
+                    property.SetValueConverter(nullableDateOnlyConverter);
+            }
+        }
     }
 }

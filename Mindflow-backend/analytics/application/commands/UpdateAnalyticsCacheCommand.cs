@@ -1,11 +1,11 @@
-using Cortex.Mediator;
+using Cortex.Mediator.Commands;
 using Mindflow_backend.Analytics.Application.Dtos;
 using Mindflow_backend.Shared.Application.Model;
 using Mindflow_backend.Shared.Domain.Model;
 
 namespace Mindflow_backend.Analytics.Application.Commands;
 
-public class UpdateAnalyticsCacheCommand : IRequest<Result<AnalyticsCacheDto>>
+public class UpdateAnalyticsCacheCommand : ICommand<Result<AnalyticsCacheDto>>
 {
     public int Id { get; set; }
     public int Score { get; set; }

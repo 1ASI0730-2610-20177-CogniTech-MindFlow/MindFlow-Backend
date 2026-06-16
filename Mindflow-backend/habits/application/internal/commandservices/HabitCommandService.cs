@@ -44,7 +44,7 @@ public class HabitCommandService : IHabitCommandService
 
         try
         {
-            habit.UpdateDetails(command.Name, command.Category, command.Frequency);
+            habit.UpdateFull(command.Name, command.Category, command.Frequency, command.Streak, command.Status, command.PausedByAi);
             _habitRepository.Update(habit);
             await _unitOfWork.CompleteAsync(cancellationToken);
             return Result<Habit>.Success(habit);

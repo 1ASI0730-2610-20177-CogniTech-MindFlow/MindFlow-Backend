@@ -1,4 +1,4 @@
-using Cortex.Mediator;
+using Cortex.Mediator.Commands;
 using Mindflow_backend.Analytics.Application.Commands;
 using Mindflow_backend.Analytics.Application.Dtos;
 using Mindflow_backend.Analytics.Domain.Entities;
@@ -9,7 +9,7 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 namespace Mindflow_backend.Analytics.Application.Handlers;
 
 public class CreateAnalyticsCacheCommandHandler(AppDbContext dbContext)
-    : IRequestHandler<CreateAnalyticsCacheCommand, Result<AnalyticsCacheDto>>
+    : ICommandHandler<CreateAnalyticsCacheCommand, Result<AnalyticsCacheDto>>
 {
     public async Task<Result<AnalyticsCacheDto>> Handle(CreateAnalyticsCacheCommand request, CancellationToken ct)
     {

@@ -1,4 +1,4 @@
-using Cortex.Mediator.Requests;
+using Cortex.Mediator.Queries;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Application.Queries;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -8,7 +8,7 @@ using Mindflow_backend.Shared.Domain.Repositories;
 namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class GetMediaHandler(IBaseRepository<Media> repository)
-    : IRequestHandler<GetMediaQuery, Result<IEnumerable<MediaDto>>>
+    : IQueryHandler<GetMediaQuery, Result<IEnumerable<MediaDto>>>
 {
     public async Task<Result<IEnumerable<MediaDto>>> Handle(GetMediaQuery request, CancellationToken ct)
     {

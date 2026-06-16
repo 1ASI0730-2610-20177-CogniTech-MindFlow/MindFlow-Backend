@@ -1,4 +1,4 @@
-using Cortex.Mediator;
+using Cortex.Mediator.Commands;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Commands;
 using Mindflow_backend.Analytics.Application.Dtos;
@@ -10,7 +10,7 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 namespace Mindflow_backend.Analytics.Application.Handlers;
 
 public class CreateWordCloudCommandHandler(AppDbContext dbContext)
-    : IRequestHandler<CreateWordCloudCommand, Result<WordCloudDto>>
+    : ICommandHandler<CreateWordCloudCommand, Result<WordCloudDto>>
 {
     public async Task<Result<WordCloudDto>> Handle(CreateWordCloudCommand request, CancellationToken ct)
     {

@@ -1,4 +1,4 @@
-using Cortex.Mediator.Requests;
+using Cortex.Mediator.Commands;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -10,7 +10,7 @@ namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class UpdateJournalEntryHandler(
     IBaseRepository<JournalEntry> repository,
-    IUnitOfWork unitOfWork) : IRequestHandler<UpdateJournalEntryCommand, Result<JournalEntryDto>>
+    IUnitOfWork unitOfWork) : ICommandHandler<UpdateJournalEntryCommand, Result<JournalEntryDto>>
 {
     public async Task<Result<JournalEntryDto>> Handle(UpdateJournalEntryCommand request, CancellationToken ct)
     {

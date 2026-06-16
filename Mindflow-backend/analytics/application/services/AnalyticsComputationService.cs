@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Domain.Entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
+using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
 
 namespace Mindflow_backend.Analytics.Application.Services;
 

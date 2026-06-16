@@ -1,4 +1,4 @@
-using Cortex.Mediator;
+using Cortex.Mediator.Queries;
 using Mindflow_backend.Analytics.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Dtos;
@@ -10,7 +10,7 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 namespace Mindflow_backend.Analytics.Application.Handlers;
 
 public class GetWordCloudQueryHandler(AppDbContext dbContext)
-    : IRequestHandler<GetWordCloudQuery, Result<WordCloudDto>>
+    : IQueryHandler<GetWordCloudQuery, Result<WordCloudDto>>
 {
     public async Task<Result<WordCloudDto>> Handle(GetWordCloudQuery request, CancellationToken ct)
     {

@@ -1,4 +1,4 @@
-using Cortex.Mediator.Requests;
+using Cortex.Mediator.Queries;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Application.Queries;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -8,7 +8,7 @@ using Mindflow_backend.Shared.Domain.Repositories;
 namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class GetEntryTagsHandler(IBaseRepository<EntryTag> repository)
-    : IRequestHandler<GetEntryTagsQuery, Result<IEnumerable<EntryTagDto>>>
+    : IQueryHandler<GetEntryTagsQuery, Result<IEnumerable<EntryTagDto>>>
 {
     public async Task<Result<IEnumerable<EntryTagDto>>> Handle(GetEntryTagsQuery request, CancellationToken ct)
     {

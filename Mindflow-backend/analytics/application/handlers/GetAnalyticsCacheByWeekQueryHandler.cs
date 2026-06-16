@@ -1,4 +1,4 @@
-using Cortex.Mediator;
+using Cortex.Mediator.Queries;
 using Mindflow_backend.Analytics.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Dtos;
@@ -11,7 +11,7 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 namespace Mindflow_backend.Analytics.Application.Handlers;
 
 public class GetAnalyticsCacheByWeekQueryHandler(AppDbContext dbContext)
-    : IRequestHandler<GetAnalyticsCacheByWeekQuery, Result<AnalyticsCacheDto>>
+    : IQueryHandler<GetAnalyticsCacheByWeekQuery, Result<AnalyticsCacheDto>>
 {
     public async Task<Result<AnalyticsCacheDto>> Handle(GetAnalyticsCacheByWeekQuery request, CancellationToken ct)
     {

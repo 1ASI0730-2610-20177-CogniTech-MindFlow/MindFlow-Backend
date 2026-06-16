@@ -55,7 +55,9 @@ public class HabitsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateHabit([FromBody] CreateHabitResource resource, CancellationToken cancellationToken)
     {
-        var command = CreateHabitCommandFromResourceAssembler.ToCommandFromResource(resource);
+        var userId = GetAuthenticatedUserId();
+        var resourceWithUser = resource with { UserId = userId };
+        var command = CreateHabitCommandFromResourceAssembler.ToCommandFromResource(resourceWithUser);
         var result = await _habitCommandService.Handle(command, cancellationToken);
         return HabitsActionResultAssembler.ToActionResultFromCreateResult(this, result, _problemDetailsFactory,
             h => CreatedAtAction(nameof(GetHabitById), new { id = h.Id }, HabitResourceFromEntityAssembler.ToResourceFromEntity(h)));
@@ -82,7 +84,7 @@ public class HabitsController : ControllerBase
 
     private int GetAuthenticatedUserId()
     {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var claim = User.FindFirst("user_id");
         return int.Parse(claim!.Value);
     }
 }

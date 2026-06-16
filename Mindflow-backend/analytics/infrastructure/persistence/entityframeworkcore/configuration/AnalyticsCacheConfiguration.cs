@@ -23,9 +23,9 @@ public class AnalyticsCacheConfiguration : IEntityTypeConfiguration<AnalyticsCac
 
         builder.Property(c => c.AiInsight).HasColumnType("text");
         builder.Property(c => c.AiInsightLocalized).HasColumnType("text");
-        builder.Property(c => c.Kpis).HasColumnType("jsonb");
-        builder.Property(c => c.FluctuationData).HasColumnType("jsonb");
-        builder.Property(c => c.TrendData).HasColumnType("jsonb");
+        builder.Property(c => c.Kpis).HasColumnType("json");
+        builder.Property(c => c.FluctuationData).HasColumnType("json");
+        builder.Property(c => c.TrendData).HasColumnType("json");
 
         builder.HasIndex(c => new { c.UserId, c.WeekStart }).IsUnique();
     }

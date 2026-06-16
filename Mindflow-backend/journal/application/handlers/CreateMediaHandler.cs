@@ -1,4 +1,4 @@
-using Cortex.Mediator.Requests;
+using Cortex.Mediator.Commands;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -9,7 +9,7 @@ namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class CreateMediaHandler(
     IBaseRepository<Media> repository,
-    IUnitOfWork unitOfWork) : IRequestHandler<CreateMediaCommand, Result<MediaDto>>
+    IUnitOfWork unitOfWork) : ICommandHandler<CreateMediaCommand, Result<MediaDto>>
 {
     public async Task<Result<MediaDto>> Handle(CreateMediaCommand request, CancellationToken ct)
     {

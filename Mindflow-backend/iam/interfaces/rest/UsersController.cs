@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Mindflow_backend.iam.application.services;
+using Mindflow_backend.iam.domain.model.commands;
 using Mindflow_backend.iam.interfaces.rest.resources;
 using Mindflow_backend.iam.interfaces.rest.transform;
 
@@ -13,21 +14,26 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
     [HttpPost("sign-up")]
     public async Task<IActionResult> SignUp([FromBody] SignUpResource resource)
     {
-        // 1. Transformar el JSON a un Comando del Dominio
         var command = SignUpCommandFromResourceAssembler.ToCommandFromResource(resource);
-        
-        // 2. Ejecutar el caso de uso
         var result = await userCommandService.Handle(command);
 
-        // 3. Evaluar el resultado usando la clase Result de tu equipo
         if (result.IsFailure)
-        {
             return BadRequest(new { error = result.Message });
-        }
 
-        // 4. Transformar la entidad guardada a un JSON seguro
         var userResource = UserResourceFromEntityAssembler.ToResourceFromEntity(result.Value!);
-        
         return CreatedAtAction(nameof(SignUp), new { id = userResource.Id }, userResource);
+    }
+
+    [HttpPost("sign-in")]
+    public async Task<IActionResult> SignIn([FromBody] SignInResource resource)
+    {
+        var command = new SignInCommand(resource.Email, resource.Password);
+        var result = await userCommandService.Handle(command);
+
+        if (result.IsFailure)
+            return Unauthorized(new { error = result.Message });
+
+        var (user, token) = result.Value;
+        return Ok(new AuthenticatedUserResource(user.Id, user.Email, token));
     }
 }

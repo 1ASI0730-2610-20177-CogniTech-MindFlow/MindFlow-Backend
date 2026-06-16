@@ -70,6 +70,16 @@ public class Habit : IAuditableEntity
         Frequency = frequency;
     }
 
+    public void UpdateFull(string name, string category, HabitFrequency frequency, int streak, HabitStatus status, bool pausedByAi)
+    {
+        Name = name;
+        Category = category;
+        Frequency = frequency;
+        Streak = streak;
+        Status = status;
+        PausedByAi = pausedByAi;
+    }
+
     public void SoftDelete()
     {
         DeletedAt = DateTimeOffset.UtcNow;

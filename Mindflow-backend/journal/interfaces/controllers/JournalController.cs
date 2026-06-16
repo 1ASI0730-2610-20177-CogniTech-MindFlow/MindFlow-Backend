@@ -26,7 +26,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
             Order = order,
             Limit = limit
         };
-        var result = await mediator.Send(query);
+        var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -35,7 +35,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
         var query = new GetJournalEntryByIdQuery { Id = id };
-        var result = await mediator.Send(query);
+        var result = await mediator.QueryAsync(query);
         if (!result.IsSuccess)
             return NotFound(result.Message);
         if (result.Value!.UserId != userId)
@@ -56,7 +56,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
             Sentiment = request.Sentiment,
             Category = request.Category
         };
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -66,7 +66,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
 
         var entryQuery = new GetJournalEntryByIdQuery { Id = id };
-        var entryResult = await mediator.Send(entryQuery);
+        var entryResult = await mediator.QueryAsync(entryQuery);
         if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
             return NotFound();
 
@@ -78,7 +78,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
             Sentiment = request.Sentiment,
             Category = request.Category
         };
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -88,12 +88,12 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
 
         var entryQuery = new GetJournalEntryByIdQuery { Id = id };
-        var entryResult = await mediator.Send(entryQuery);
+        var entryResult = await mediator.QueryAsync(entryQuery);
         if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
             return NotFound();
 
         var command = new DeleteJournalEntryCommand { Id = id };
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok() : BadRequest(result.Message);
     }
 
@@ -102,7 +102,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
         var query = new GetTagsQuery { UserId = userId };
-        var result = await mediator.Send(query);
+        var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -110,7 +110,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetEntryTags([FromQuery] int? entryId)
     {
         var query = new GetEntryTagsQuery { EntryId = entryId };
-        var result = await mediator.Send(query);
+        var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -120,11 +120,11 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
 
         var entryQuery = new GetJournalEntryByIdQuery { Id = command.EntryId };
-        var entryResult = await mediator.Send(entryQuery);
+        var entryResult = await mediator.QueryAsync(entryQuery);
         if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
             return NotFound();
 
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -132,7 +132,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> DeleteEntryTag(int id)
     {
         var command = new DeleteEntryTagCommand { Id = id };
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok() : BadRequest(result.Message);
     }
 
@@ -140,7 +140,7 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetMedia([FromQuery] int? entryId)
     {
         var query = new GetMediaQuery { EntryId = entryId };
-        var result = await mediator.Send(query);
+        var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -150,11 +150,11 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
 
         var entryQuery = new GetJournalEntryByIdQuery { Id = command.EntryId };
-        var entryResult = await mediator.Send(entryQuery);
+        var entryResult = await mediator.QueryAsync(entryQuery);
         if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
             return NotFound();
 
-        var result = await mediator.Send(command);
+        var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 }

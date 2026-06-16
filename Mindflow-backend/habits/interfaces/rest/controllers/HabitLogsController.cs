@@ -80,7 +80,7 @@ public class HabitLogsController : ControllerBase
 
     private int GetAuthenticatedUserId()
     {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var claim = User.FindFirst("user_id");
         return int.Parse(claim!.Value);
     }
 }

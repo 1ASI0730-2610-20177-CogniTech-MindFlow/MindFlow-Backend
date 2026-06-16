@@ -1,4 +1,4 @@
-using Cortex.Mediator;
+using Cortex.Mediator.Commands;
 using Mindflow_backend.Analytics.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Commands;
@@ -10,7 +10,7 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 namespace Mindflow_backend.Analytics.Application.Handlers;
 
 public class UpdateAnalyticsCacheCommandHandler(AppDbContext dbContext)
-    : IRequestHandler<UpdateAnalyticsCacheCommand, Result<AnalyticsCacheDto>>
+    : ICommandHandler<UpdateAnalyticsCacheCommand, Result<AnalyticsCacheDto>>
 {
     public async Task<Result<AnalyticsCacheDto>> Handle(UpdateAnalyticsCacheCommand request, CancellationToken ct)
     {
