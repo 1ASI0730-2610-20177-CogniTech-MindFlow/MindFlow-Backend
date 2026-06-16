@@ -4,6 +4,7 @@ using Mindflow_backend.Analytics.Domain.Entities;
 using Mindflow_backend.Analytics.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Configuration;
 using Mindflow_backend.iam.domain.model.aggregates;
+using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
@@ -16,6 +17,7 @@ namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore
 public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<AnalyticsCache> AnalyticsCaches => Set<AnalyticsCache>();
     public DbSet<WordCloud> WordClouds => Set<WordCloud>();
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
@@ -68,6 +70,15 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<EntryTag>(entity =>
         {
             entity.HasIndex(et => new { et.EntryId, et.TagId }).IsUnique();
+        });
+
+        builder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Token).IsRequired().HasMaxLength(64);
+            entity.Property(t => t.ExpiresAt).IsRequired();
+            entity.HasIndex(t => t.Token).IsUnique();
+            entity.HasIndex(t => t.UserId);
         });
 
         builder.ApplyHabitsConfiguration();

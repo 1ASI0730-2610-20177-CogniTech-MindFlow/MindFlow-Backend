@@ -1,8 +1,10 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.iam.application.errors;
 using Mindflow_backend.iam.application.services;
 using Mindflow_backend.iam.domain.model.aggregates;
 using Mindflow_backend.iam.domain.model.commands;
+using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.iam.domain.repositories;
 using Mindflow_backend.Shared.Application.Model;
 using Mindflow_backend.Shared.Domain.Repositories;
@@ -15,7 +17,8 @@ public class UserCommandService(
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
     AppDbContext dbContext,
-    IGoogleAuthService googleAuthService) : IUserCommandService
+    IGoogleAuthService googleAuthService,
+    IEmailService emailService) : IUserCommandService
 {
     public async Task<Result<User>> Handle(SignUpCommand command)
     {
@@ -124,5 +127,50 @@ public class UserCommandService(
 
         var token = tokenService.GenerateToken(user);
         return Result<(User, string)>.Success((user, token));
+    }
+
+    public async Task<Result> Handle(ForgotPasswordCommand command)
+    {
+        var user = await userRepository.FindByEmailAsync(command.Email);
+        if (user == null)
+            return Result.Success(); // no revelar si el email existe
+
+        var rawToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+
+        await dbContext.PasswordResetTokens
+            .Where(t => t.UserId == user.Id && !t.Used)
+            .ExecuteDeleteAsync();
+
+        dbContext.PasswordResetTokens.Add(new PasswordResetToken
+        {
+            UserId = user.Id,
+            Token = rawToken,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            Used = false
+        });
+        await dbContext.SaveChangesAsync();
+
+        await emailService.SendPasswordResetAsync(user.Email, rawToken);
+        return Result.Success();
+    }
+
+    public async Task<Result> Handle(ResetPasswordCommand command)
+    {
+        var resetToken = await dbContext.PasswordResetTokens
+            .FirstOrDefaultAsync(t => t.Token == command.Token && !t.Used);
+
+        if (resetToken == null || resetToken.ExpiresAt < DateTime.UtcNow)
+            return Result.Failure(SignInError.InvalidCredentials, "El enlace es inválido o ha expirado.");
+
+        var user = await userRepository.FindByIdAsync(resetToken.UserId);
+        if (user == null)
+            return Result.Failure(SignInError.InvalidCredentials, "Usuario no encontrado.");
+
+        user.UpdatePasswordHash(command.NewPassword);
+        resetToken.Used = true;
+
+        userRepository.Update(user);
+        await unitOfWork.CompleteAsync();
+        return Result.Success();
     }
 }

@@ -101,6 +101,7 @@ builder.Services.AddScoped<ProblemDetailsFactory>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 
 builder.Services.AddScoped<IHabitRepository, HabitRepository>();

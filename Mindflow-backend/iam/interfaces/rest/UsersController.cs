@@ -51,6 +51,23 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
         return Ok(new AuthenticatedUserResource(user.Id, user.Email, token));
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordResource resource)
+    {
+        var command = new ForgotPasswordCommand(resource.Email);
+        await userCommandService.Handle(command);
+        return Ok(new { message = "Si el correo existe, recibirás un enlace de recuperación." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordResource resource)
+    {
+        var command = new ResetPasswordCommand(resource.Token, resource.NewPassword);
+        var result = await userCommandService.Handle(command);
+        if (result.IsFailure) return BadRequest(new { error = result.Message });
+        return Ok(new { message = "Contraseña actualizada correctamente." });
+    }
+
     [HttpPut("profile")]
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileResource resource)

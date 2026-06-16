@@ -11,4 +11,6 @@ public interface IUserCommandService
     Task<Result<User>> Handle(UpdateProfileCommand command);
     Task<Result> Handle(DeleteAccountCommand command);
     Task<Result<(User User, string Token)>> Handle(GoogleAuthCommand command);
+    Task<Result> Handle(ForgotPasswordCommand command);
+    Task<Result> Handle(ResetPasswordCommand command);
 }
