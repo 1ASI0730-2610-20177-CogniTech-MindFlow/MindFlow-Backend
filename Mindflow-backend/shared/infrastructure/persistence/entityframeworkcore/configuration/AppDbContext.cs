@@ -98,6 +98,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(s => s.StripeSubscriptionId).HasMaxLength(100);
             entity.HasIndex(s => s.UserId).IsUnique();
             entity.HasIndex(s => s.StripeCustomerId);
+        });
+
         builder.Entity<DeviceToken>(entity =>
         {
             entity.HasKey(dt => dt.Id);
