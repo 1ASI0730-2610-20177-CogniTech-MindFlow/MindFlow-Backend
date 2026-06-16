@@ -34,6 +34,8 @@ using Mindflow_backend.Shared.Infrastructure.Interfaces.AspNetCore.Configuration
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Mindflow_backend.Shared.Interfaces.Rest.ProblemDetails;
+using Mindflow_backend.Support.Application.Services;
+using Mindflow_backend.Support.Infrastructure.Services;
 using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = LicenseType.Community;
@@ -137,6 +139,7 @@ builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddScoped<ISupportService, SupportService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
 
 builder.Services.AddCortexMediator([typeof(Program)]);
