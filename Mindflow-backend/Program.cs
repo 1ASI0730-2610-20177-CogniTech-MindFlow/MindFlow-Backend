@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text;
 using Cortex.Mediator.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -88,6 +89,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddLocalization();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<ProblemDetailsFactory>();
 
 builder.Services.AddScoped<IHabitRepository, HabitRepository>();
