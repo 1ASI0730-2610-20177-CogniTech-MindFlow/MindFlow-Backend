@@ -7,7 +7,15 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Mindflow_backend.AiIntegration.Application.Services;
+using Mindflow_backend.AiIntegration.Infrastructure.Services;
 using Mindflow_backend.Analytics.Application.Services;
+using Mindflow_backend.Subscriptions.Application.Services;
+using Mindflow_backend.Subscriptions.Infrastructure.Services;
+using Mindflow_backend.Notifications.Application.Services;
+using Mindflow_backend.Notifications.Infrastructure.BackgroundServices;
+using Mindflow_backend.Notifications.Infrastructure.Services;
+using Mindflow_backend.WellnessEngine.Application.Services;
 using Mindflow_backend.Journal.Application.Services;
 using Mindflow_backend.Journal.Infrastructure.Services;
 using Mindflow_backend.Habits.Application.Internal.CommandServices;
@@ -19,6 +27,8 @@ using Mindflow_backend.iam.application.services;
 using Mindflow_backend.iam.domain.repositories;
 using Mindflow_backend.iam.infrastructure.persistence.entityframeworkcore.repositories;
 using Mindflow_backend.iam.infrastructure.services;
+using Mindflow_backend.Reporting.Application.Services;
+using Mindflow_backend.Reporting.Infrastructure.Services;
 using Mindflow_backend.Shared.Domain.Repositories;
 using Mindflow_backend.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -26,6 +36,9 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Rep
 using Mindflow_backend.Shared.Interfaces.Rest.ProblemDetails;
 using Mindflow_backend.Support.Application.Services;
 using Mindflow_backend.Support.Infrastructure.Services;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -115,11 +128,19 @@ builder.Services.AddScoped<IHabitLogCommandService, HabitLogCommandService>();
 builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
+builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
+builder.Services.AddHttpClient("Gemini");
+builder.Services.AddHttpClient("Fcm");
+builder.Services.AddScoped<IAiService, GeminiService>();
+builder.Services.AddScoped<IWellnessService, WellnessService>();
+builder.Services.AddScoped<INotificationService, FcmNotificationService>();
+builder.Services.AddHostedService<HydrationReminderService>();
 builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ISupportService, SupportService>();
+builder.Services.AddScoped<IReportingService, ReportingService>();
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 

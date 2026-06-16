@@ -6,8 +6,10 @@ using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Configuration;
 using Mindflow_backend.iam.domain.model.aggregates;
 using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using Mindflow_backend.Notifications.Domain.Model.Entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Mindflow_backend.Support.Domain.Model.Entities;
+using Mindflow_backend.Subscriptions.Domain.Model.Entities;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
 using EntryTag = Mindflow_backend.Journal.Domain.Entities.EntryTag;
 using Tag = Mindflow_backend.Journal.Domain.Entities.Tag;
@@ -26,6 +28,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<EntryTag> EntryTags => Set<EntryTag>();
     public DbSet<Media> Media => Set<Media>();
     public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -49,6 +53,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
 
         builder.Entity<JournalEntry>(entity =>
         {
+            entity.Property(e => e.AiResponse).HasColumnType("TEXT");
+
             entity.HasMany(e => e.EntryTags)
                   .WithOne(et => et.Entry)
                   .HasForeignKey(et => et.EntryId);
@@ -81,6 +87,24 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(t => t.ExpiresAt).IsRequired();
             entity.HasIndex(t => t.Token).IsUnique();
             entity.HasIndex(t => t.UserId);
+        });
+
+        builder.Entity<Subscription>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.Plan).IsRequired().HasMaxLength(20);
+            entity.Property(s => s.Status).IsRequired().HasMaxLength(20);
+            entity.Property(s => s.StripeCustomerId).HasMaxLength(100);
+            entity.Property(s => s.StripeSubscriptionId).HasMaxLength(100);
+            entity.HasIndex(s => s.UserId).IsUnique();
+            entity.HasIndex(s => s.StripeCustomerId);
+        builder.Entity<DeviceToken>(entity =>
+        {
+            entity.HasKey(dt => dt.Id);
+            entity.Property(dt => dt.Token).IsRequired().HasMaxLength(512);
+            entity.Property(dt => dt.Platform).IsRequired().HasMaxLength(20);
+            entity.HasIndex(dt => dt.Token).IsUnique();
+            entity.HasIndex(dt => dt.UserId);
         });
 
         builder.ApplyHabitsConfiguration();

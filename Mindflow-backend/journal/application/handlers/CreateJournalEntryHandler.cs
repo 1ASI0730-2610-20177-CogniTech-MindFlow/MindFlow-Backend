@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Mindflow_backend.AiIntegration.Application.Services;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -9,10 +10,16 @@ namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class CreateJournalEntryHandler(
     IBaseRepository<JournalEntry> repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateJournalEntryCommand, Result<JournalEntryDto>>
+    IUnitOfWork unitOfWork,
+    IAiService aiService) : ICommandHandler<CreateJournalEntryCommand, Result<JournalEntryDto>>
 {
-    private static readonly string[] PositiveWords = ["feliz", "bien", "genial", "excelente", "alegre", "contento", "motivado", "logré", "happy", "great", "good", "amazing", "wonderful"];
-    private static readonly string[] NegativeWords = ["triste", "mal", "terrible", "ansioso", "estresado", "frustrado", "agotado", "sad", "bad", "stressed", "anxious", "exhausted", "frustrated"];
+    private static readonly string[] PositiveWords =
+        ["feliz", "bien", "genial", "excelente", "alegre", "contento", "motivado", "logré",
+         "happy", "great", "good", "amazing", "wonderful"];
+
+    private static readonly string[] NegativeWords =
+        ["triste", "mal", "terrible", "ansioso", "estresado", "frustrado", "agotado",
+         "sad", "bad", "stressed", "anxious", "exhausted", "frustrated"];
 
     public async Task<Result<JournalEntryDto>> Handle(CreateJournalEntryCommand request, CancellationToken ct)
     {
@@ -25,6 +32,8 @@ public class CreateJournalEntryHandler(
                       : "neutral";
         }
 
+        var aiResponse = await aiService.GenerateEmpathicResponseAsync(request.Content, sentiment);
+
         var entry = new JournalEntry
         {
             UserId = request.UserId,
@@ -33,7 +42,8 @@ public class CreateJournalEntryHandler(
             Content = request.Content,
             Sentiment = sentiment,
             Category = request.Category,
-            HasPreview = request.Content.Length > 200
+            HasPreview = request.Content.Length > 200,
+            AiResponse = string.IsNullOrEmpty(aiResponse) ? null : aiResponse
         };
 
         await repository.AddAsync(entry, ct);
@@ -52,6 +62,7 @@ public class CreateJournalEntryHandler(
         Sentiment = e.Sentiment,
         Category = e.Category,
         HasPreview = e.HasPreview,
+        AiResponse = e.AiResponse,
         CreatedAt = e.CreatedAt,
         UpdatedAt = e.UpdatedAt
     };
