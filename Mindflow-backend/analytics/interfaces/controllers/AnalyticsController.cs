@@ -10,13 +10,13 @@ using System.Text.Json;
 namespace Mindflow_backend.Analytics.Interfaces.Controllers;
 
 [ApiController]
-[Route("analytics")]
+[Route("")]
 [Authorize]
 public sealed class AnalyticsController(
     IMediator mediator,
     AnalyticsComputationService computationService) : ControllerBase
 {
-    [HttpGet("cache")]
+    [HttpGet("analyticsCache")]
     public async Task<IActionResult> GetAnalyticsCache([FromQuery] DateOnly? weekStart)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
@@ -25,14 +25,14 @@ public sealed class AnalyticsController(
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
-    [HttpPost("cache")]
+    [HttpPost("analyticsCache")]
     public async Task<IActionResult> CreateAnalyticsCache([FromBody] CreateAnalyticsCacheCommand command)
     {
         var result = await mediator.Send(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
-    [HttpPut("cache/{id}")]
+    [HttpPut("analyticsCache/{id}")]
     public async Task<IActionResult> UpdateAnalyticsCache(int id, [FromBody] UpdateAnalyticsCacheCommand command)
     {
         command.Id = id;
@@ -40,7 +40,7 @@ public sealed class AnalyticsController(
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
-    [HttpPost("compute")]
+    [HttpPost("analyticsCache/compute")]
     public async Task<IActionResult> ComputeWeeklyAnalytics([FromQuery] DateOnly? weekStart)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
@@ -65,7 +65,7 @@ public sealed class AnalyticsController(
         });
     }
 
-    [HttpGet("word-cloud")]
+    [HttpGet("wordCloud")]
     public async Task<IActionResult> GetWordCloud()
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
@@ -74,14 +74,14 @@ public sealed class AnalyticsController(
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
-    [HttpPost("word-cloud")]
+    [HttpPost("wordCloud")]
     public async Task<IActionResult> CreateWordCloud([FromBody] CreateWordCloudCommand command)
     {
         var result = await mediator.Send(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
-    [HttpPost("word-cloud/compute")]
+    [HttpPost("wordCloud/compute")]
     public async Task<IActionResult> ComputeWordCloud()
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
