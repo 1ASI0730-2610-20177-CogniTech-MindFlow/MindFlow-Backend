@@ -1,12 +1,13 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Mindflow_backend.AiIntegration.Application.Services;
 using Mindflow_backend.Analytics.Domain.Entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
 
 namespace Mindflow_backend.Analytics.Application.Services;
 
-public class AnalyticsComputationService(AppDbContext dbContext)
+public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiService)
 {
     public async Task<AnalyticsCache> ComputeAndSaveWeeklyAsync(int userId, DateOnly weekStart)
     {
@@ -30,7 +31,7 @@ public class AnalyticsComputationService(AppDbContext dbContext)
         var fluctuationData = BuildFluctuationData(entries, weekStart);
         var trendData = await BuildTrendDataAsync(userId, weekStart);
         var kpis = BuildKpis(entries, score);
-        var aiInsight = GenerateAiInsight(entries, score);
+        var aiInsight = await GenerateAiInsightAsync(entries, score);
 
         var existing = await dbContext.AnalyticsCaches
             .FirstOrDefaultAsync(c => c.UserId == userId && c.WeekStart == weekStart);
@@ -269,37 +270,44 @@ public class AnalyticsComputationService(AppDbContext dbContext)
         return JsonSerializer.Serialize(kpis);
     }
 
-    private static (string english, string spanish) GenerateAiInsight(
+    private async Task<(string english, string spanish)> GenerateAiInsightAsync(
         List<JournalEntry> entries, int score)
     {
         var count = entries.Count;
         var mood = score >= 70 ? "positive" : score >= 40 ? "neutral" : "low";
 
-        string en, es;
-
-        if (count == 0)
+        string en = mood switch
         {
-            en = "No entries recorded this week. Start writing to track your emotional well-being.";
-            es = "No registraste entradas esta semana. Empieza a escribir para monitorear tu bienestar emocional.";
+            "positive" => $"Great week! You recorded {count} entries with a generally positive mood. Keep up the good habits.",
+            "low" => $"This week you wrote {count} entries. We noticed some challenging emotions. Consider taking time for self-care.",
+            _ => count == 0
+                ? "No entries recorded this week. Start writing to track your emotional well-being."
+                : $"You recorded {count} entries this week with a balanced mood. Consistent reflection builds emotional awareness."
+        };
+
+        string es;
+        if (count > 0)
+        {
+            var contents = entries.Select(e => e.Content);
+            var geminiResponse = await aiService.GenerateWeeklySummaryAsync(contents, score);
+            es = string.IsNullOrEmpty(geminiResponse)
+                ? FallbackSpanish(count, mood)
+                : geminiResponse;
         }
         else
         {
-            en = mood switch
-            {
-                "positive" => $"Great week! You recorded {count} entries with a generally positive mood. Keep up the good habits.",
-                "low" => $"This week you wrote {count} entries. We noticed some challenging emotions. Consider taking time for self-care.",
-                _ => $"You recorded {count} entries this week with a balanced mood. Consistent reflection builds emotional awareness."
-            };
-            es = mood switch
-            {
-                "positive" => $"¡Gran semana! Registraste {count} entradas con un estado de ánimo generalmente positivo. Sigue con esos buenos hábitos.",
-                "low" => $"Esta semana escribiste {count} entradas. Notamos algunas emociones desafiantes. Considera tomarte tiempo para cuidarte.",
-                _ => $"Registraste {count} entradas esta semana con un estado de ánimo equilibrado. La reflexión constante fortalece la conciencia emocional."
-            };
+            es = "No registraste entradas esta semana. Empieza a escribir para monitorear tu bienestar emocional.";
         }
 
         return (en, es);
     }
+
+    private static string FallbackSpanish(int count, string mood) => mood switch
+    {
+        "positive" => $"¡Gran semana! Registraste {count} entradas con un estado de ánimo generalmente positivo. Sigue con esos buenos hábitos.",
+        "low" => $"Esta semana escribiste {count} entradas. Notamos algunas emociones desafiantes. Considera tomarte tiempo para cuidarte.",
+        _ => $"Registraste {count} entradas esta semana con un estado de ánimo equilibrado. La reflexión constante fortalece la conciencia emocional."
+    };
 
     private static List<object> ExtractWordCloud(List<JournalEntry> entries)
     {
