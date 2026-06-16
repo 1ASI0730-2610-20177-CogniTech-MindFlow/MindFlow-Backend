@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 using Mindflow_backend.AiIntegration.Application.Services;
 using Mindflow_backend.AiIntegration.Infrastructure.Services;
 using Mindflow_backend.Analytics.Application.Services;
+using Mindflow_backend.Subscriptions.Application.Services;
+using Mindflow_backend.Subscriptions.Infrastructure.Services;
 using Mindflow_backend.Notifications.Application.Services;
 using Mindflow_backend.Notifications.Infrastructure.BackgroundServices;
 using Mindflow_backend.Notifications.Infrastructure.Services;
@@ -119,6 +121,7 @@ builder.Services.AddScoped<IHabitLogCommandService, HabitLogCommandService>();
 builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
+builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
 builder.Services.AddHttpClient("Gemini");
 builder.Services.AddHttpClient("Fcm");
 builder.Services.AddScoped<IAiService, GeminiService>();
