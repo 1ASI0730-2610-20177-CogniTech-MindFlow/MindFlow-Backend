@@ -1,4 +1,5 @@
 using Cortex.Mediator;
+using Mindflow_backend.Analytics.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Commands;
 using Mindflow_backend.Analytics.Application.Dtos;
@@ -18,7 +19,7 @@ public class UpdateAnalyticsCacheCommandHandler(AppDbContext dbContext)
 
         if (cache is null)
             return Result<AnalyticsCacheDto>.Failure(
-                new Error("AnalyticsCache.NotFound", "Analytics cache not found."));
+                AnalyticsError.AnalyticsCacheNotFound, "Analytics cache not found.");
 
         cache.Score = request.Score;
         cache.TrendPercentage = request.TrendPercentage;

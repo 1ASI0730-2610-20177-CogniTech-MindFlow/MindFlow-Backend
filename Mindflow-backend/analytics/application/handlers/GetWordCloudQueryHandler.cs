@@ -1,4 +1,5 @@
 using Cortex.Mediator;
+using Mindflow_backend.Analytics.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Dtos;
 using Mindflow_backend.Analytics.Application.Queries;
@@ -19,7 +20,7 @@ public class GetWordCloudQueryHandler(AppDbContext dbContext)
 
         if (wordCloud is null)
             return Result<WordCloudDto>.Failure(
-                new Error("WordCloud.NotFound", "No word cloud found for the current user."));
+                 AnalyticsError.WordCloudNotFound, "No word cloud found for the current user."); 
 
         return Result<WordCloudDto>.Success(new WordCloudDto
         {

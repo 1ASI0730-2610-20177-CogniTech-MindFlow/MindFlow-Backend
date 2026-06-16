@@ -1,4 +1,5 @@
 using Cortex.Mediator;
+using Mindflow_backend.Analytics.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Analytics.Application.Dtos;
 using Mindflow_backend.Analytics.Application.Queries;
@@ -20,7 +21,7 @@ public class GetAnalyticsCacheByWeekQueryHandler(AppDbContext dbContext)
 
         if (cache is null)
             return Result<AnalyticsCacheDto>.Failure(
-                new Error("AnalyticsCache.NotFound", "No analytics cache found for the specified week."));
+                AnalyticsError.AnalyticsCacheNotFound, "No analytics cache found for the specified week."); 
 
         return Result<AnalyticsCacheDto>.Success(MapToDto(cache));
     }
