@@ -18,7 +18,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
 {
     protected readonly AppDbContext Context;
 
-    protected BaseRepository(AppDbContext context)
+    public BaseRepository(AppDbContext context)
     {
         Context = context;
     }
