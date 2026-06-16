@@ -27,11 +27,16 @@ using Mindflow_backend.iam.application.services;
 using Mindflow_backend.iam.domain.repositories;
 using Mindflow_backend.iam.infrastructure.persistence.entityframeworkcore.repositories;
 using Mindflow_backend.iam.infrastructure.services;
+using Mindflow_backend.Reporting.Application.Services;
+using Mindflow_backend.Reporting.Infrastructure.Services;
 using Mindflow_backend.Shared.Domain.Repositories;
 using Mindflow_backend.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Mindflow_backend.Shared.Interfaces.Rest.ProblemDetails;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -131,6 +136,8 @@ builder.Services.AddHostedService<HydrationReminderService>();
 builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<IReportingService, ReportingService>();
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 
