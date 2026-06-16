@@ -2,7 +2,8 @@ using Cortex.Mediator;
 using Mindflow_backend.Analytics.Application.Commands;
 using Mindflow_backend.Analytics.Application.Dtos;
 using Mindflow_backend.Analytics.Domain.Entities;
-using Mindflow_backend.Shared.Domain.Model.Errors;
+using Mindflow_backend.Shared.Application.Model;
+using Mindflow_backend.Shared.Domain.Model;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
 namespace Mindflow_backend.Analytics.Application.Handlers;
