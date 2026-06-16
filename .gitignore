@@ -5,3 +5,4 @@ riderModule.iml
 /_ReSharper.Caches/
 Mindflow-backend/appsettings.Development.json
 Mindflow-backend/docs/client_secret_*.json
+Mindflow-backend/docs/*firebase-adminsdk*.json
