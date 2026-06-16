@@ -2,6 +2,7 @@ using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
+using Mindflow_backend.iam.domain.model.aggregates;
 using Mindflow_backend.Analytics.Domain.Entities;
 using Mindflow_backend.Analytics.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
@@ -28,6 +29,16 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(builder);
 
+        // Aquí agrega la configuración de cada bounded context de tu proyecto, por ejemplo:
+        // builder.ApplyMiBoundedContextConfiguration();
+        
+        // CONFIGURACIÓN DE BOUNDED CONTEXT (IAM)
+        builder.Entity<User>().HasKey(u => u.Id);
+        builder.Entity<User>().Property(u => u.Id).IsRequired().ValueGeneratedOnAdd();
+        builder.Entity<User>().Property(u => u.Email).IsRequired().HasMaxLength(255);
+        builder.Entity<User>().Property(u => u.PasswordHash).IsRequired();
+        builder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+        // Aplica la convención de nombres snake_case + pluralización para toda la base de datos
         builder.ApplyHabitsConfiguration();
 
         builder.UseSnakeCaseNamingConvention();

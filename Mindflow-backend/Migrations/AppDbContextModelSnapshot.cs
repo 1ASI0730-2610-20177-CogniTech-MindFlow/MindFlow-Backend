@@ -19,6 +19,7 @@ namespace Mindflow_backend.Migrations
                 .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("Mindflow_backend.iam.domain.model.aggregates.User", b =>
             modelBuilder.Entity("Mindflow_backend.Habits.Domain.Model.Aggregates.Habit", b =>
                 {
                     b.Property<int>("Id")
@@ -36,6 +37,16 @@ namespace Mindflow_backend.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("password_hash");
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetime")
                         .HasColumnName("deleted_at");
@@ -74,6 +85,14 @@ namespace Mindflow_backend.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("updated_at");
 
+                    b.HasKey("Id")
+                        .HasName("p_k_users");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("i_x_users_email");
+
+                    b.ToTable("users");
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("user_id");
