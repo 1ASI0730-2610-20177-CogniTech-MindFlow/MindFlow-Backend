@@ -1,6 +1,6 @@
 using Mindflow_backend.Shared.Domain.Model.Entities;
 
-namespace Mindflow_backend.Journal.Domain.Entities;
+namespace Mindflow_backend.Analytics.Domain.Entities;
 
 public class JournalEntry : IAuditableEntity
 {
