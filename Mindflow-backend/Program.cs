@@ -24,6 +24,8 @@ using Mindflow_backend.Shared.Infrastructure.Interfaces.AspNetCore.Configuration
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Mindflow_backend.Shared.Interfaces.Rest.ProblemDetails;
+using Mindflow_backend.Support.Application.Services;
+using Mindflow_backend.Support.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -116,6 +118,8 @@ builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ISupportService, SupportService>();
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 

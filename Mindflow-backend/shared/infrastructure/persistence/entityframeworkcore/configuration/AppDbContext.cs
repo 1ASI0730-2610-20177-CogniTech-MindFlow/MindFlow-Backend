@@ -7,6 +7,7 @@ using Mindflow_backend.iam.domain.model.aggregates;
 using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
+using Mindflow_backend.Support.Domain.Model.Entities;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
 using EntryTag = Mindflow_backend.Journal.Domain.Entities.EntryTag;
 using Tag = Mindflow_backend.Journal.Domain.Entities.Tag;
@@ -24,6 +25,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<EntryTag> EntryTags => Set<EntryTag>();
     public DbSet<Media> Media => Set<Media>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -83,6 +85,16 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
 
         builder.ApplyHabitsConfiguration();
         builder.ApplyAnalyticsConfiguration();
+
+        builder.Entity<SupportTicket>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.UserEmail).IsRequired().HasMaxLength(255);
+            entity.Property(t => t.Subject).IsRequired().HasMaxLength(255);
+            entity.Property(t => t.Message).IsRequired();
+            entity.Property(t => t.Status).IsRequired().HasMaxLength(20);
+            entity.HasIndex(t => t.UserId);
+        });
 
         builder.UseSnakeCaseNamingConvention();
 
