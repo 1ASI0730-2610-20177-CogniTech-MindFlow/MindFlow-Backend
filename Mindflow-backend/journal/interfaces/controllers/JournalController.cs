@@ -4,13 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Application.Queries;
+using Mindflow_backend.Journal.Application.Services;
 
 namespace Mindflow_backend.Journal.Interfaces.Controllers;
 
 [ApiController]
 [Route("journal")]
 [Authorize]
-public sealed class JournalController(IMediator mediator) : ControllerBase
+public sealed class JournalController(IMediator mediator, IFileStorageService fileStorage) : ControllerBase
 {
     [HttpGet("entries")]
     public async Task<IActionResult> GetEntries(
@@ -158,5 +159,32 @@ public sealed class JournalController(IMediator mediator) : ControllerBase
 
         var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
+    }
+
+    [HttpPost("media/upload")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<IActionResult> UploadMedia([FromForm] int entryId, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { error = "No se proporcionó ningún archivo." });
+
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        var entryQuery = new GetJournalEntryByIdQuery { Id = entryId };
+        var entryResult = await mediator.QueryAsync(entryQuery);
+        if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
+            return NotFound();
+
+        try
+        {
+            var (url, type) = await fileStorage.SaveAsync(file, userId);
+            var command = new CreateMediaCommand { EntryId = entryId, Type = type, Url = url };
+            var result = await mediator.SendAsync(command);
+            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

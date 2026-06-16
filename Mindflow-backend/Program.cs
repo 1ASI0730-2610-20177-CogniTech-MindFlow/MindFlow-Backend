@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Mindflow_backend.Analytics.Application.Services;
+using Mindflow_backend.Journal.Application.Services;
+using Mindflow_backend.Journal.Infrastructure.Services;
 using Mindflow_backend.Habits.Application.Internal.CommandServices;
 using Mindflow_backend.Habits.Application.Internal.QueryServices;
 using Mindflow_backend.Habits.Domain.Repositories;
@@ -112,6 +114,8 @@ builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
 builder.Services.AddScoped<AnalyticsComputationService>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 
@@ -127,6 +131,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors("AllowFrontendPolicy");
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
