@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Mindflow_backend.AiIntegration.Application.Services;
 using Mindflow_backend.AiIntegration.Infrastructure.Services;
 using Mindflow_backend.Analytics.Application.Services;
+using Mindflow_backend.WellnessEngine.Application.Services;
 using Mindflow_backend.Journal.Application.Services;
 using Mindflow_backend.Journal.Infrastructure.Services;
 using Mindflow_backend.Habits.Application.Internal.CommandServices;
@@ -117,6 +118,7 @@ builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
 builder.Services.AddHttpClient("Gemini");
 builder.Services.AddScoped<IAiService, GeminiService>();
+builder.Services.AddScoped<IWellnessService, WellnessService>();
 builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();

@@ -44,6 +44,24 @@ public class GeminiService(
         return await CallGeminiAsync(prompt);
     }
 
+    public async Task<string> GenerateStressAdviceAsync(
+        string stressLevel, int score, int entryCount, IEnumerable<string> habitNames)
+    {
+        var habits = string.Join(", ", habitNames.Take(5));
+        var prompt = $"""
+            Eres un asistente de bienestar mental. El usuario tiene un nivel de estrés '{stressLevel}' (puntaje {score}/100) basado en {entryCount} entradas de diario recientes.
+            Hábitos del usuario: {(string.IsNullOrEmpty(habits) ? "ninguno registrado" : habits)}.
+
+            Genera un mensaje empático en español (2-3 oraciones) que:
+            - Si el estrés es 'high': explique con calidez por qué pausamos temporalmente sus hábitos y cómo puede cuidarse.
+            - Si el estrés es 'medium': anime a mantener rutinas con pequeños ajustes.
+            - Si el estrés es 'low': celebre su bienestar y motive a continuar con sus hábitos.
+            Sin encabezados ni listas.
+            """;
+
+        return await CallGeminiAsync(prompt);
+    }
+
     private async Task<string> CallGeminiAsync(string prompt)
     {
         var apiKey = configuration["AiSettings:GeminiApiKey"];
