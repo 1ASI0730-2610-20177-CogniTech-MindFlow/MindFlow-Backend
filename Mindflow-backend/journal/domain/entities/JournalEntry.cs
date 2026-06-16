@@ -12,6 +12,7 @@ public class JournalEntry : IAuditableEntity
     public string Sentiment { get; set; } = "neutral";
     public string Category { get; set; } = "Sin categoría";
     public bool HasPreview { get; set; }
+    public string? AiResponse { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
