@@ -39,7 +39,9 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<User>().Property(u => u.PasswordHash).IsRequired();
         builder.Entity<User>().Property(u => u.Name).HasMaxLength(100);
         builder.Entity<User>().Property(u => u.Occupation).HasMaxLength(100);
+        builder.Entity<User>().Property(u => u.GoogleId).HasMaxLength(255);
         builder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+        builder.Entity<User>().HasIndex(u => u.GoogleId).IsUnique();
 
         builder.Entity<JournalEntry>(entity =>
         {

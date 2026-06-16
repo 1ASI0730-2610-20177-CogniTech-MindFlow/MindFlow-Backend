@@ -10,12 +10,11 @@ namespace Mindflow_backend.iam.infrastructure.persistence.entityframeworkcore.re
 public class UserRepository(AppDbContext context) : BaseRepository<User>(context), IUserRepository
 {
     public async Task<User?> FindByEmailAsync(string email)
-    {
-        return await Context.Set<User>().FirstOrDefaultAsync(u => u.Email == email);
-    }
+        => await Context.Set<User>().FirstOrDefaultAsync(u => u.Email == email);
+
+    public async Task<User?> FindByGoogleIdAsync(string googleId)
+        => await Context.Set<User>().FirstOrDefaultAsync(u => u.GoogleId == googleId);
 
     public bool ExistsByEmail(string email)
-    {
-        return Context.Set<User>().Any(u => u.Email == email);
-    }
+        => Context.Set<User>().Any(u => u.Email == email);
 }

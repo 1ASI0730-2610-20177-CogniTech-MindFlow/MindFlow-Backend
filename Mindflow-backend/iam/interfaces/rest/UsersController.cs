@@ -38,6 +38,19 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
         return Ok(new AuthenticatedUserResource(user.Id, user.Email, token));
     }
 
+    [HttpPost("google-auth")]
+    public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthResource resource)
+    {
+        var command = new GoogleAuthCommand(resource.Credential);
+        var result = await userCommandService.Handle(command);
+
+        if (result.IsFailure)
+            return Unauthorized(new { error = result.Message });
+
+        var (user, token) = result.Value;
+        return Ok(new AuthenticatedUserResource(user.Id, user.Email, token));
+    }
+
     [HttpPut("profile")]
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileResource resource)

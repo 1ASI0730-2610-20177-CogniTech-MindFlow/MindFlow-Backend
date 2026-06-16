@@ -14,7 +14,8 @@ public class UserCommandService(
     IUserRepository userRepository,
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
-    AppDbContext dbContext) : IUserCommandService
+    AppDbContext dbContext,
+    IGoogleAuthService googleAuthService) : IUserCommandService
 {
     public async Task<Result<User>> Handle(SignUpCommand command)
     {
@@ -95,5 +96,33 @@ public class UserCommandService(
         userRepository.Remove(user);
         await unitOfWork.CompleteAsync();
         return Result.Success();
+    }
+
+    public async Task<Result<(User User, string Token)>> Handle(GoogleAuthCommand command)
+    {
+        var info = await googleAuthService.ValidateAsync(command.Credential);
+        if (info == null)
+            return Result<(User, string)>.Failure(SignInError.InvalidCredentials, "Token de Google inválido o expirado.");
+
+        var user = await userRepository.FindByGoogleIdAsync(info.GoogleId);
+
+        if (user == null)
+        {
+            user = await userRepository.FindByEmailAsync(info.Email);
+            if (user != null)
+            {
+                user.LinkGoogle(info.GoogleId);
+                userRepository.Update(user);
+            }
+            else
+            {
+                user = new User(info.Email, info.GoogleId, info.Name);
+                await userRepository.AddAsync(user);
+            }
+            await unitOfWork.CompleteAsync();
+        }
+
+        var token = tokenService.GenerateToken(user);
+        return Result<(User, string)>.Success((user, token));
     }
 }
