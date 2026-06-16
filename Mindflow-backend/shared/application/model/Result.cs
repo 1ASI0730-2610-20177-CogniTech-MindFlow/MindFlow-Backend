@@ -1,3 +1,5 @@
+using Mindflow_backend.Shared.Domain.Model;
+
 namespace Mindflow_backend.Shared.Application.Model;
 
 /// <summary>

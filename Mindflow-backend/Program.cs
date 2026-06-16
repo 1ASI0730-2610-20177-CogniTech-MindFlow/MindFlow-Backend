@@ -7,6 +7,11 @@ using Mindflow_backend.Habits.Application.Internal.CommandServices;
 using Mindflow_backend.Habits.Application.Internal.QueryServices;
 using Mindflow_backend.Habits.Domain.Repositories;
 using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Repositories;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Cortex.Mediator.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Shared.Domain.Repositories;
 using Mindflow_backend.Shared.Infrastructure.Interfaces.AspNetCore.Configuration;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -24,6 +29,8 @@ builder.Services.AddControllers(options =>
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -81,6 +88,9 @@ builder.Services.AddScoped<IHabitCommandService, HabitCommandService>();
 builder.Services.AddScoped<IHabitLogCommandService, HabitLogCommandService>();
 builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
+
+builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
+builder.Services.AddScoped<AnalyticsComputationService>();
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 

@@ -1,0 +1,36 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mindflow-api
+    ports:
+      - "5166:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=server=db;user=root;password=MindflowRootPassword123;database=Mindflow-database
+      - TokenSettings__Secret=SuperSecretKeyForMindflowJwtTokenGeneration
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: mindflow-db
+    environment:
+      MYSQL_ROOT_PASSWORD: MindflowRootPassword123
+      MYSQL_DATABASE: Mindflow-database
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
