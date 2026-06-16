@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
@@ -10,16 +11,17 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 namespace Mindflow_backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260612214132_AddHabitsBoundedContext")]
+    partial class AddHabitsBoundedContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("Mindflow_backend.iam.domain.model.aggregates.User", b =>
             modelBuilder.Entity("Mindflow_backend.Habits.Domain.Model.Aggregates.Habit", b =>
                 {
                     b.Property<int>("Id")
@@ -37,16 +39,6 @@ namespace Mindflow_backend.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
-                        .HasColumnName("email");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("password_hash");
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetime")
                         .HasColumnName("deleted_at");
@@ -85,14 +77,6 @@ namespace Mindflow_backend.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("updated_at");
 
-                    b.HasKey("Id")
-                        .HasName("p_k_users");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("i_x_users_email");
-
-                    b.ToTable("users");
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("user_id");
