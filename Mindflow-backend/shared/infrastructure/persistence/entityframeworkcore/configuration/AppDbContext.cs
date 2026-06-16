@@ -3,6 +3,8 @@
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Microsoft.EntityFrameworkCore;
+using Mindflow_backend.Analytics.Domain.Entities;
+using Mindflow_backend.Analytics.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 
 namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
