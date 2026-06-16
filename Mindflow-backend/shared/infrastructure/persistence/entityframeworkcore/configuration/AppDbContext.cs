@@ -47,6 +47,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
 
         builder.Entity<JournalEntry>(entity =>
         {
+            entity.Property(e => e.AiResponse).HasColumnType("TEXT");
+
             entity.HasMany(e => e.EntryTags)
                   .WithOne(et => et.Entry)
                   .HasForeignKey(et => et.EntryId);
