@@ -6,6 +6,7 @@ using Mindflow_backend.Habits.Infrastructure.Persistence.Ef.Configuration;
 using Mindflow_backend.iam.domain.model.aggregates;
 using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
+using Mindflow_backend.Notifications.Domain.Model.Entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
 using EntryTag = Mindflow_backend.Journal.Domain.Entities.EntryTag;
@@ -24,6 +25,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<EntryTag> EntryTags => Set<EntryTag>();
     public DbSet<Media> Media => Set<Media>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -81,6 +83,15 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(t => t.ExpiresAt).IsRequired();
             entity.HasIndex(t => t.Token).IsUnique();
             entity.HasIndex(t => t.UserId);
+        });
+
+        builder.Entity<DeviceToken>(entity =>
+        {
+            entity.HasKey(dt => dt.Id);
+            entity.Property(dt => dt.Token).IsRequired().HasMaxLength(512);
+            entity.Property(dt => dt.Platform).IsRequired().HasMaxLength(20);
+            entity.HasIndex(dt => dt.Token).IsUnique();
+            entity.HasIndex(dt => dt.UserId);
         });
 
         builder.ApplyHabitsConfiguration();
