@@ -1,13 +1,17 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Mindflow_backend.AiIntegration.Application.Services;
+using Mindflow_backend.AiIntegration.Domain.Model.Entities;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
 namespace Mindflow_backend.AiIntegration.Infrastructure.Services;
 
 public class GeminiService(
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
-    ILogger<GeminiService> logger) : IAiService
+    ILogger<GeminiService> logger,
+    AppDbContext dbContext) : IAiService
 {
     private const string ApiBase =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
@@ -23,7 +27,7 @@ public class GeminiService(
             Proporciona una respuesta breve (2-3 oraciones), cálida y empática en español. Valida sus emociones sin juzgar. Sin encabezados ni listas.
             """;
 
-        return await CallGeminiAsync(prompt);
+        return await CallGeminiAsync(prompt, "empathic_response");
     }
 
     public async Task<string> GenerateWeeklySummaryAsync(IEnumerable<string> contents, int score)
@@ -41,7 +45,7 @@ public class GeminiService(
             Genera un resumen empático y motivador en español (3-4 oraciones) que refleje su semana emocional. Sin encabezados ni listas.
             """;
 
-        return await CallGeminiAsync(prompt);
+        return await CallGeminiAsync(prompt, "weekly_summary");
     }
 
     public async Task<string> GenerateStressAdviceAsync(
@@ -59,13 +63,18 @@ public class GeminiService(
             Sin encabezados ni listas.
             """;
 
-        return await CallGeminiAsync(prompt);
+        return await CallGeminiAsync(prompt, "stress_advice");
     }
 
-    private async Task<string> CallGeminiAsync(string prompt)
+    private async Task<string> CallGeminiAsync(string prompt, string operation)
     {
         var apiKey = configuration["AiSettings:GeminiApiKey"];
         if (string.IsNullOrWhiteSpace(apiKey)) return string.Empty;
+
+        var sw = Stopwatch.StartNew();
+        string? errorMsg = null;
+        var success = false;
+        var responseText = string.Empty;
 
         try
         {
@@ -84,7 +93,11 @@ public class GeminiService(
             var client = httpClientFactory.CreateClient("Gemini");
             var response = await client.PostAsync($"{ApiBase}?key={apiKey}", httpContent);
 
-            if (!response.IsSuccessStatusCode) return string.Empty;
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMsg = $"HTTP {(int)response.StatusCode}";
+                return string.Empty;
+            }
 
             var responseJson = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(responseJson);
@@ -96,12 +109,41 @@ public class GeminiService(
                 .GetProperty("text")
                 .GetString();
 
-            return text?.Trim() ?? string.Empty;
+            responseText = text?.Trim() ?? string.Empty;
+            success = !string.IsNullOrEmpty(responseText);
+            return responseText;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Gemini API call failed — returning empty response.");
+            errorMsg = ex.Message[..Math.Min(ex.Message.Length, 500)];
             return string.Empty;
+        }
+        finally
+        {
+            sw.Stop();
+            await SaveMetricAsync(operation, (int)sw.ElapsedMilliseconds, success, prompt.Length, responseText.Length, errorMsg);
+        }
+    }
+
+    private async Task SaveMetricAsync(string operation, int latencyMs, bool success, int promptLength, int responseLength, string? errorMessage)
+    {
+        try
+        {
+            dbContext.AiMetricLogs.Add(new AiMetricLog
+            {
+                Operation = operation,
+                LatencyMs = latencyMs,
+                Success = success,
+                PromptLength = promptLength,
+                ResponseLength = responseLength,
+                ErrorMessage = errorMessage
+            });
+            await dbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to save AI metric log.");
         }
     }
 }

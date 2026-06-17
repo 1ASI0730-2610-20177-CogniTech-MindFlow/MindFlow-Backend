@@ -10,6 +10,7 @@ using Mindflow_backend.Notifications.Domain.Model.Entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Encryption;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Mindflow_backend.AiFeedback.Domain.Model.Entities;
+using Mindflow_backend.AiIntegration.Domain.Model.Entities;
 using Mindflow_backend.Support.Domain.Model.Entities;
 using Mindflow_backend.Subscriptions.Domain.Model.Entities;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
@@ -33,6 +34,7 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
     public DbSet<AiFeedbackRating> AiFeedbackRatings => Set<AiFeedbackRating>();
+    public DbSet<AiMetricLog> AiMetricLogs => Set<AiMetricLog>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -137,6 +139,14 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
             entity.Property(f => f.Comment).HasMaxLength(500);
             entity.HasIndex(f => f.UserId);
             entity.HasIndex(f => new { f.UserId, f.ContentId, f.ContentType }).IsUnique();
+        });
+
+        builder.Entity<AiMetricLog>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Operation).IsRequired().HasMaxLength(50);
+            entity.Property(m => m.ErrorMessage).HasMaxLength(500);
+            entity.HasIndex(m => m.CreatedAt);
         });
 
         builder.UseSnakeCaseNamingConvention();
