@@ -9,7 +9,8 @@ public class EmailService(IConfiguration configuration) : IEmailService
     public async Task SendPasswordResetAsync(string toEmail, string resetToken)
     {
         var smtp = configuration.GetSection("Email");
-        var frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
+        var frontendUrl = configuration["FrontendUrl"]?.Split(',', StringSplitOptions.TrimEntries).FirstOrDefault()
+                         ?? "http://localhost:5173";
         var resetLink = $"{frontendUrl}/reset-password?token={resetToken}";
 
         var message = new MailMessage

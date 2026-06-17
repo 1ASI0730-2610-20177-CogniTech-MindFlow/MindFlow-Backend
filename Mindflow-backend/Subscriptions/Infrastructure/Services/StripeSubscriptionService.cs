@@ -34,8 +34,8 @@ public class StripeSubscriptionService(
                     Quantity = 1
                 }
             ],
-            SuccessUrl = $"{configuration["FrontendUrl"]}/premium/success?session_id={{CHECKOUT_SESSION_ID}}",
-            CancelUrl  = $"{configuration["FrontendUrl"]}/premium/cancel",
+            SuccessUrl = $"{GetPrimaryFrontendUrl()}/premium/success?session_id={{CHECKOUT_SESSION_ID}}",
+            CancelUrl  = $"{GetPrimaryFrontendUrl()}/premium/cancel",
             Metadata   = new Dictionary<string, string> { ["user_id"] = userId.ToString() }
         };
 
@@ -122,6 +122,10 @@ public class StripeSubscriptionService(
         await unitOfWork.CompleteAsync(ct);
         logger.LogInformation("Subscription canceled for customer {CustomerId}.", customerId);
     }
+
+    private string GetPrimaryFrontendUrl() =>
+        configuration["FrontendUrl"]?.Split(',', StringSplitOptions.TrimEntries).FirstOrDefault()
+        ?? "http://localhost:5173";
 
     private async Task MarkPastDueByStripeCustomerAsync(string customerId, CancellationToken ct)
     {
