@@ -8,6 +8,7 @@ using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Notifications.Domain.Model.Entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
+using Mindflow_backend.AiFeedback.Domain.Model.Entities;
 using Mindflow_backend.Support.Domain.Model.Entities;
 using Mindflow_backend.Subscriptions.Domain.Model.Entities;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
@@ -30,6 +31,7 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<AiFeedbackRating> AiFeedbackRatings => Set<AiFeedbackRating>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -120,6 +122,16 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(t => t.Message).IsRequired();
             entity.Property(t => t.Status).IsRequired().HasMaxLength(20);
             entity.HasIndex(t => t.UserId);
+        });
+
+        builder.Entity<AiFeedbackRating>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.ContentType).IsRequired().HasMaxLength(20);
+            entity.Property(f => f.Rating).IsRequired();
+            entity.Property(f => f.Comment).HasMaxLength(500);
+            entity.HasIndex(f => f.UserId);
+            entity.HasIndex(f => new { f.UserId, f.ContentId, f.ContentType }).IsUnique();
         });
 
         builder.UseSnakeCaseNamingConvention();

@@ -36,6 +36,8 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Mindflow_backend.Shared.Interfaces.Rest.ProblemDetails;
 using Mindflow_backend.Support.Application.Services;
+using Mindflow_backend.AiFeedback.Application.Services;
+using Mindflow_backend.AiFeedback.Infrastructure.Services;
 using Mindflow_backend.Support.Infrastructure.Services;
 using QuestPDF.Infrastructure;
 
@@ -143,6 +145,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ISupportService, SupportService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
+builder.Services.AddScoped<IAiFeedbackService, AiFeedbackService>();
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 
