@@ -34,8 +34,8 @@ public class StripeSubscriptionService(
                     Quantity = 1
                 }
             ],
-            SuccessUrl = $"{GetPrimaryFrontendUrl()}/premium/success?session_id={{CHECKOUT_SESSION_ID}}",
-            CancelUrl  = $"{GetPrimaryFrontendUrl()}/premium/cancel",
+            SuccessUrl = $"{GetPrimaryFrontendUrl()}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}",
+            CancelUrl  = $"{GetPrimaryFrontendUrl()}/subscription/cancel",
             Metadata   = new Dictionary<string, string> { ["user_id"] = userId.ToString() }
         };
 
