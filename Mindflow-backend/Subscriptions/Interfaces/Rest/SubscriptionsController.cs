@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mindflow_backend.Subscriptions.Application.Services;
@@ -14,10 +15,17 @@ public sealed class SubscriptionsController(ISubscriptionService subscriptionSer
     public async Task<IActionResult> Checkout(CancellationToken ct)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
-        var email  = User.FindFirst("email")?.Value ?? string.Empty;
+        var email  = User.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
 
-        var result = await subscriptionService.CreateCheckoutSessionAsync(userId, email, ct);
-        return Ok(result);
+        try
+        {
+            var result = await subscriptionService.CreateCheckoutSessionAsync(userId, email, ct);
+            return Ok(result);
+        }
+        catch (StripeException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpGet("me")]
