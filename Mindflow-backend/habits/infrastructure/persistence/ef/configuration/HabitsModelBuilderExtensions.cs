@@ -42,6 +42,7 @@ public static class HabitsModelBuilderExtensions
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(h => h.UserId);
+            entity.HasIndex(h => new { h.UserId, h.Status });
         });
 
         builder.Entity<HabitCompletionLog>(entity =>
@@ -61,6 +62,8 @@ public static class HabitsModelBuilderExtensions
                 .HasDefaultValue(true);
 
             entity.HasIndex(l => l.HabitId);
+            entity.HasIndex(l => new { l.HabitId, l.Date });
+            entity.HasIndex(l => l.Date);
         });
     }
 }
