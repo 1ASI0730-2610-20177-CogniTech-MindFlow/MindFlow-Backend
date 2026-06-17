@@ -7,6 +7,7 @@ using Mindflow_backend.iam.domain.model.aggregates;
 using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Notifications.Domain.Model.Entities;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Encryption;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
 using Mindflow_backend.AiFeedback.Domain.Model.Entities;
 using Mindflow_backend.Support.Domain.Model.Entities;
@@ -18,7 +19,7 @@ using Media = Mindflow_backend.Journal.Domain.Entities.Media;
 
 namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
-public class AppDbContext(DbContextOptions options) : DbContext(options)
+public class AppDbContext(DbContextOptions options, AesEncryptionService encryptionService) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
@@ -54,8 +55,11 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<User>().HasIndex(u => u.Email).IsUnique();
         builder.Entity<User>().HasIndex(u => u.GoogleId).IsUnique();
 
+        var encryptedConverter = new EncryptedStringConverter(encryptionService);
+
         builder.Entity<JournalEntry>(entity =>
         {
+            entity.Property(e => e.Content).HasColumnType("LONGTEXT").HasConversion(encryptedConverter);
             entity.Property(e => e.AiResponse).HasColumnType("TEXT");
 
             entity.HasMany(e => e.EntryTags)

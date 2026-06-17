@@ -39,6 +39,7 @@ using Mindflow_backend.Support.Application.Services;
 using Mindflow_backend.AiFeedback.Application.Services;
 using Mindflow_backend.AiFeedback.Infrastructure.Services;
 using Mindflow_backend.Support.Infrastructure.Services;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Encryption;
 using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = LicenseType.Community;
@@ -146,6 +147,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ISupportService, SupportService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
 builder.Services.AddScoped<IAiFeedbackService, AiFeedbackService>();
+
+var encryptionKey = builder.Configuration["Encryption:AesKey"] ?? "";
+if (!string.IsNullOrEmpty(encryptionKey))
+    builder.Services.AddSingleton(new AesEncryptionService(encryptionKey));
+else
+    builder.Services.AddSingleton(new AesEncryptionService(Convert.ToBase64String(new byte[32])));
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 
