@@ -66,6 +66,23 @@ public class GeminiService(
         return await CallGeminiAsync(prompt, "stress_advice");
     }
 
+    public async Task<string> GenerateHabitSuggestionsAsync(
+        IEnumerable<string> currentHabits, int completionRate, string stressLevel, IEnumerable<string> recentJournalSnippets)
+    {
+        var habits = string.Join(", ", currentHabits.Take(10));
+        var snippets = string.Join("\n- ", recentJournalSnippets.Take(5).Select(s => s[..Math.Min(s.Length, 100)]));
+        var prompt =
+            "Eres un asistente de bienestar mental. Analiza el perfil del usuario y sugiere 3 hábitos nuevos personalizados.\n\n" +
+            $"Hábitos actuales: {(string.IsNullOrEmpty(habits) ? "ninguno" : habits)}\n" +
+            $"Tasa de completado: {completionRate}%\n" +
+            $"Nivel de estrés: {stressLevel}\n" +
+            "Fragmentos recientes del diario:\n" +
+            $"- {(string.IsNullOrEmpty(snippets) ? "sin entradas recientes" : snippets)}\n\n" +
+            "Responde SOLO con un JSON array (sin markdown, sin backticks) con exactamente 3 objetos con las keys: name, category, frequency (Daily/Weekly/Monthly), reason (en español).";
+
+        return await CallGeminiAsync(prompt, "habit_suggestions");
+    }
+
     private async Task<string> CallGeminiAsync(string prompt, string operation)
     {
         var apiKey = configuration["AiSettings:GeminiApiKey"];
