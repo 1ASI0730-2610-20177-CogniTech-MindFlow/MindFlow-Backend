@@ -145,7 +145,7 @@ builder.Services.AddScoped<INotificationService, FcmNotificationService>();
 builder.Services.AddHostedService<HydrationReminderService>();
 builder.Services.AddHostedService<WeeklySummaryScheduler>();
 builder.Services.AddScoped<AnalyticsComputationService>();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ISupportService, SupportService>();
