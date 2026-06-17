@@ -173,4 +173,49 @@ public class UserCommandService(
         await unitOfWork.CompleteAsync();
         return Result.Success();
     }
+
+    public async Task<Result> Handle(SetPinCommand command)
+    {
+        if (command.Pin.Length is < 4 or > 6 || !command.Pin.All(char.IsDigit))
+            return Result.Failure(SignUpError.UnexpectedError, "El PIN debe ser numérico y tener entre 4 y 6 dígitos.");
+
+        var user = await userRepository.FindByIdAsync(command.UserId);
+        if (user == null)
+            return Result.Failure(SignUpError.UnexpectedError, "Usuario no encontrado.");
+
+        user.SetPin(command.Pin);
+        userRepository.Update(user);
+        await unitOfWork.CompleteAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result<bool>> Handle(VerifyPinCommand command)
+    {
+        var user = await userRepository.FindByIdAsync(command.UserId);
+        if (user == null)
+            return Result<bool>.Failure(SignUpError.UnexpectedError, "Usuario no encontrado.");
+
+        if (!user.HasPin)
+            return Result<bool>.Failure(SignUpError.UnexpectedError, "No tienes un PIN configurado.");
+
+        return Result<bool>.Success(user.VerifyPin(command.Pin));
+    }
+
+    public async Task<Result> Handle(RemovePinCommand command)
+    {
+        var user = await userRepository.FindByIdAsync(command.UserId);
+        if (user == null)
+            return Result.Failure(SignUpError.UnexpectedError, "Usuario no encontrado.");
+
+        user.RemovePin();
+        userRepository.Update(user);
+        await unitOfWork.CompleteAsync();
+        return Result.Success();
+    }
+
+    public async Task<bool> HasPinAsync(int userId)
+    {
+        var user = await userRepository.FindByIdAsync(userId);
+        return user?.HasPin ?? false;
+    }
 }
