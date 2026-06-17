@@ -8,21 +8,12 @@ public static class UpdateHabitCommandFromResourceAssembler
 {
     public static UpdateHabitCommand ToCommandFromResource(int id, int userId, UpdateHabitResource resource)
     {
-        var frequency = resource.Frequency switch
-        {
-            "daily" => HabitFrequency.Daily,
-            "weekly" => HabitFrequency.Weekly,
-            "monthly" => HabitFrequency.Monthly,
-            _ => throw new ArgumentException($"Invalid frequency: {resource.Frequency}")
-        };
+        if (!Enum.TryParse<HabitFrequency>(resource.Frequency, ignoreCase: true, out var frequency))
+            throw new ArgumentException($"Invalid frequency: {resource.Frequency}");
 
-        var status = resource.Status switch
-        {
-            "pending" => HabitStatus.Pending,
-            "completed" => HabitStatus.Completed,
-            "paused_by_ai" => HabitStatus.PausedByAi,
-            _ => throw new ArgumentException($"Invalid status: {resource.Status}")
-        };
+        var statusNormalized = resource.Status?.Replace("_", "") ?? "Pending";
+        if (!Enum.TryParse<HabitStatus>(statusNormalized, ignoreCase: true, out var status))
+            throw new ArgumentException($"Invalid status: {resource.Status}");
 
         return new UpdateHabitCommand(id, userId, resource.Name, resource.Category, frequency, resource.Streak, status, resource.PausedByAi);
     }

@@ -8,13 +8,8 @@ public static class CreateHabitCommandFromResourceAssembler
 {
     public static CreateHabitCommand ToCommandFromResource(CreateHabitResource resource)
     {
-        var frequency = resource.Frequency switch
-        {
-            "daily" => HabitFrequency.Daily,
-            "weekly" => HabitFrequency.Weekly,
-            "monthly" => HabitFrequency.Monthly,
-            _ => throw new ArgumentException($"Invalid frequency: {resource.Frequency}")
-        };
+        if (!Enum.TryParse<HabitFrequency>(resource.Frequency, ignoreCase: true, out var frequency))
+            throw new ArgumentException($"Invalid frequency: {resource.Frequency}");
 
         return new CreateHabitCommand(resource.UserId, resource.Name, resource.Category, frequency);
     }
