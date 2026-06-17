@@ -62,7 +62,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontendPolicy", policy =>
     {
-        policy.WithOrigins(builder.Configuration["FrontendUrl"] ?? "http://localhost:5173")
+        var origins = builder.Configuration["FrontendUrl"]?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            ?? ["http://localhost:5173"];
+
+        policy.WithOrigins(origins)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
