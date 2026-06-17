@@ -7,7 +7,10 @@ using Mindflow_backend.iam.domain.model.aggregates;
 using Mindflow_backend.iam.domain.model.entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration.Extensions;
 using Mindflow_backend.Notifications.Domain.Model.Entities;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Encryption;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Interceptors;
+using Mindflow_backend.AiFeedback.Domain.Model.Entities;
+using Mindflow_backend.AiIntegration.Domain.Model.Entities;
 using Mindflow_backend.Support.Domain.Model.Entities;
 using Mindflow_backend.Subscriptions.Domain.Model.Entities;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
@@ -17,7 +20,7 @@ using Media = Mindflow_backend.Journal.Domain.Entities.Media;
 
 namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
-public class AppDbContext(DbContextOptions options) : DbContext(options)
+public class AppDbContext(DbContextOptions options, AesEncryptionService encryptionService) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
@@ -30,6 +33,8 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<AiFeedbackRating> AiFeedbackRatings => Set<AiFeedbackRating>();
+    public DbSet<AiMetricLog> AiMetricLogs => Set<AiMetricLog>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -48,11 +53,15 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
         builder.Entity<User>().Property(u => u.Name).HasMaxLength(100);
         builder.Entity<User>().Property(u => u.Occupation).HasMaxLength(100);
         builder.Entity<User>().Property(u => u.GoogleId).HasMaxLength(255);
+        builder.Entity<User>().Property(u => u.PinHash).HasMaxLength(255);
         builder.Entity<User>().HasIndex(u => u.Email).IsUnique();
         builder.Entity<User>().HasIndex(u => u.GoogleId).IsUnique();
 
+        var encryptedConverter = new EncryptedStringConverter(encryptionService);
+
         builder.Entity<JournalEntry>(entity =>
         {
+            entity.Property(e => e.Content).HasColumnType("LONGTEXT").HasConversion(encryptedConverter);
             entity.Property(e => e.AiResponse).HasColumnType("TEXT");
 
             entity.HasMany(e => e.EntryTags)
@@ -120,6 +129,24 @@ public class AppDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(t => t.Message).IsRequired();
             entity.Property(t => t.Status).IsRequired().HasMaxLength(20);
             entity.HasIndex(t => t.UserId);
+        });
+
+        builder.Entity<AiFeedbackRating>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.ContentType).IsRequired().HasMaxLength(20);
+            entity.Property(f => f.Rating).IsRequired();
+            entity.Property(f => f.Comment).HasMaxLength(500);
+            entity.HasIndex(f => f.UserId);
+            entity.HasIndex(f => new { f.UserId, f.ContentId, f.ContentType }).IsUnique();
+        });
+
+        builder.Entity<AiMetricLog>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Operation).IsRequired().HasMaxLength(50);
+            entity.Property(m => m.ErrorMessage).HasMaxLength(500);
+            entity.HasIndex(m => m.CreatedAt);
         });
 
         builder.UseSnakeCaseNamingConvention();

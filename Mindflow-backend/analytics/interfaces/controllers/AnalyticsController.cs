@@ -81,6 +81,18 @@ public sealed class AnalyticsController(
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
+    [HttpGet("moodCalendar")]
+    public async Task<IActionResult> GetMoodCalendar([FromQuery] int? year, [FromQuery] int? month)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var now = DateTime.UtcNow;
+        var y = year ?? now.Year;
+        var m = month ?? now.Month;
+
+        var result = await computationService.ComputeMoodCalendarAsync(userId, y, m);
+        return Ok(new { year = y, month = m, days = result });
+    }
+
     [HttpPost("wordCloud/compute")]
     public async Task<IActionResult> ComputeWordCloud()
     {

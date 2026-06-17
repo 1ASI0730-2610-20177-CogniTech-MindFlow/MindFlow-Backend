@@ -13,6 +13,7 @@ using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Subscriptions.Application.Services;
 using Mindflow_backend.Subscriptions.Infrastructure.Services;
 using Mindflow_backend.Notifications.Application.Services;
+using Mindflow_backend.Analytics.Infrastructure.BackgroundServices;
 using Mindflow_backend.Notifications.Infrastructure.BackgroundServices;
 using Mindflow_backend.Notifications.Infrastructure.Services;
 using Mindflow_backend.WellnessEngine.Application.Services;
@@ -35,7 +36,10 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Con
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Repositories;
 using Mindflow_backend.Shared.Interfaces.Rest.ProblemDetails;
 using Mindflow_backend.Support.Application.Services;
+using Mindflow_backend.AiFeedback.Application.Services;
+using Mindflow_backend.AiFeedback.Infrastructure.Services;
 using Mindflow_backend.Support.Infrastructure.Services;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Encryption;
 using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = LicenseType.Community;
@@ -135,12 +139,20 @@ builder.Services.AddScoped<IAiService, GeminiService>();
 builder.Services.AddScoped<IWellnessService, WellnessService>();
 builder.Services.AddScoped<INotificationService, FcmNotificationService>();
 builder.Services.AddHostedService<HydrationReminderService>();
+builder.Services.AddHostedService<WeeklySummaryScheduler>();
 builder.Services.AddScoped<AnalyticsComputationService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ISupportService, SupportService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
+builder.Services.AddScoped<IAiFeedbackService, AiFeedbackService>();
+
+var encryptionKey = builder.Configuration["Encryption:AesKey"] ?? "";
+if (!string.IsNullOrEmpty(encryptionKey))
+    builder.Services.AddSingleton(new AesEncryptionService(encryptionKey));
+else
+    builder.Services.AddSingleton(new AesEncryptionService(Convert.ToBase64String(new byte[32])));
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 

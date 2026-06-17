@@ -13,4 +13,8 @@ public interface IUserCommandService
     Task<Result<(User User, string Token)>> Handle(GoogleAuthCommand command);
     Task<Result> Handle(ForgotPasswordCommand command);
     Task<Result> Handle(ResetPasswordCommand command);
+    Task<Result> Handle(SetPinCommand command);
+    Task<Result<bool>> Handle(VerifyPinCommand command);
+    Task<Result> Handle(RemovePinCommand command);
+    Task<bool> HasPinAsync(int userId);
 }

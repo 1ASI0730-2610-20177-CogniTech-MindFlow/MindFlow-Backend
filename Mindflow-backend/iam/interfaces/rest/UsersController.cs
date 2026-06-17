@@ -95,4 +95,55 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
 
         return NoContent();
     }
+
+    [HttpPost("pin")]
+    [Authorize]
+    public async Task<IActionResult> SetPin([FromBody] SetPinResource resource)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var command = new SetPinCommand(userId, resource.Pin);
+        var result = await userCommandService.Handle(command);
+
+        if (result.IsFailure)
+            return BadRequest(new { error = result.Message });
+
+        return Ok(new { message = "PIN configurado correctamente." });
+    }
+
+    [HttpPost("pin/verify")]
+    [Authorize]
+    public async Task<IActionResult> VerifyPin([FromBody] VerifyPinResource resource)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var command = new VerifyPinCommand(userId, resource.Pin);
+        var result = await userCommandService.Handle(command);
+
+        if (result.IsFailure)
+            return BadRequest(new { error = result.Message });
+
+        return Ok(new { valid = result.Value });
+    }
+
+    [HttpDelete("pin")]
+    [Authorize]
+    public async Task<IActionResult> RemovePin()
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var command = new RemovePinCommand(userId);
+        var result = await userCommandService.Handle(command);
+
+        if (result.IsFailure)
+            return BadRequest(new { error = result.Message });
+
+        return Ok(new { message = "PIN eliminado correctamente." });
+    }
+
+    [HttpGet("pin/status")]
+    [Authorize]
+    public async Task<IActionResult> PinStatus()
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var hasPin = await userCommandService.HasPinAsync(userId);
+        return Ok(new { has_pin = hasPin });
+    }
 }

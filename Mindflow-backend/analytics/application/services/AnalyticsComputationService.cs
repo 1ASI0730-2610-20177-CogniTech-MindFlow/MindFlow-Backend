@@ -71,6 +71,47 @@ public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiSe
         return existing;
     }
 
+    public async Task<List<object>> ComputeMoodCalendarAsync(int userId, int year, int month)
+    {
+        var start = new DateOnly(year, month, 1);
+        var end = start.AddMonths(1).AddDays(-1);
+
+        var entries = await dbContext.JournalEntries
+            .AsNoTracking()
+            .Where(e => e.UserId == userId && e.Date >= start && e.Date <= end)
+            .ToListAsync();
+
+        var grouped = entries
+            .GroupBy(e => e.Date)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var days = new List<object>();
+        for (var d = start; d <= end; d = d.AddDays(1))
+        {
+            if (!grouped.TryGetValue(d, out var dayEntries))
+            {
+                days.Add(new { date = d.ToString("yyyy-MM-dd"), sentiment = (string?)null, color = (string?)null, entryCount = 0 });
+                continue;
+            }
+
+            var dominant = dayEntries
+                .GroupBy(e => e.Sentiment?.ToLower() ?? "neutral")
+                .OrderByDescending(g => g.Count())
+                .First().Key;
+
+            var color = dominant switch
+            {
+                "positive" => "#4CAF50",
+                "negative" => "#F44336",
+                _ => "#FF9800"
+            };
+
+            days.Add(new { date = d.ToString("yyyy-MM-dd"), sentiment = dominant, color, entryCount = dayEntries.Count });
+        }
+
+        return days;
+    }
+
     public async Task<WordCloud> ComputeAndSaveWordCloudAsync(int userId)
     {
         var entries = await dbContext.JournalEntries

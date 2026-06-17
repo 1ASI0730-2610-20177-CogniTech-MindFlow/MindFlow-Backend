@@ -14,6 +14,9 @@ public partial class User : IAuditableEntity
     [JsonIgnore]
     public string PasswordHash { get; private set; }
 
+    [JsonIgnore]
+    public string? PinHash { get; private set; }
+
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 
@@ -49,6 +52,23 @@ public partial class User : IAuditableEntity
     {
         Name = name;
         Occupation = occupation;
+        return this;
+    }
+
+    public bool HasPin => PinHash is not null;
+
+    public User SetPin(string pin)
+    {
+        PinHash = BCrypt.Net.BCrypt.HashPassword(pin);
+        return this;
+    }
+
+    public bool VerifyPin(string pin) =>
+        PinHash is not null && BCrypt.Net.BCrypt.Verify(pin, PinHash);
+
+    public User RemovePin()
+    {
+        PinHash = null;
         return this;
     }
 }
