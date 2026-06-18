@@ -1,5 +1,4 @@
 using Cortex.Mediator.Commands;
-using Mindflow_backend.AiIntegration.Application.Services;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -10,8 +9,7 @@ namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class CreateJournalEntryHandler(
     IBaseRepository<JournalEntry> repository,
-    IUnitOfWork unitOfWork,
-    IAiService aiService) : ICommandHandler<CreateJournalEntryCommand, Result<JournalEntryDto>>
+    IUnitOfWork unitOfWork) : ICommandHandler<CreateJournalEntryCommand, Result<JournalEntryDto>>
 {
     private static readonly string[] PositiveWords =
         ["feliz", "bien", "genial", "excelente", "alegre", "contento", "motivado", "logré",
@@ -24,15 +22,15 @@ public class CreateJournalEntryHandler(
     public async Task<Result<JournalEntryDto>> Handle(CreateJournalEntryCommand request, CancellationToken ct)
     {
         var sentiment = request.Sentiment;
-        if (string.IsNullOrWhiteSpace(sentiment))
+
+        if (string.IsNullOrWhiteSpace(sentiment)
+            || string.Equals(sentiment, "auto", StringComparison.OrdinalIgnoreCase))
         {
             var text = $"{request.Content} {request.Title}".ToLowerInvariant();
             sentiment = PositiveWords.Any(text.Contains) ? "positive"
                       : NegativeWords.Any(text.Contains) ? "negative"
                       : "neutral";
         }
-
-        var aiResponse = await aiService.GenerateEmpathicResponseAsync(request.Content, sentiment);
 
         var entry = new JournalEntry
         {
@@ -42,8 +40,7 @@ public class CreateJournalEntryHandler(
             Content = request.Content,
             Sentiment = sentiment,
             Category = request.Category,
-            HasPreview = request.Content.Length > 200,
-            AiResponse = string.IsNullOrEmpty(aiResponse) ? null : aiResponse
+            HasPreview = request.Content.Length > 200
         };
 
         await repository.AddAsync(entry, ct);
