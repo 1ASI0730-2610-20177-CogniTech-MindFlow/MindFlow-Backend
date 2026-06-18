@@ -6,4 +6,5 @@ public interface IAiService
     Task<string> GenerateWeeklySummaryAsync(IEnumerable<string> contents, int score);
     Task<string> GenerateStressAdviceAsync(string stressLevel, int score, int entryCount, IEnumerable<string> habitNames);
     Task<string> GenerateHabitSuggestionsAsync(IEnumerable<string> currentHabits, int completionRate, string stressLevel, IEnumerable<string> recentJournalSnippets);
+    Task<string> GenerateChatResponseAsync(IEnumerable<(string Role, string Content)> conversationHistory);
 }

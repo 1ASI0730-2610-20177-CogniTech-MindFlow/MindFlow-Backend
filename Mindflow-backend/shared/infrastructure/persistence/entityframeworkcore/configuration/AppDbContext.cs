@@ -14,6 +14,7 @@ using Mindflow_backend.AiIntegration.Domain.Model.Entities;
 using Mindflow_backend.Support.Domain.Model.Entities;
 using Mindflow_backend.Habits.Domain.Model.Entities;
 using Mindflow_backend.Subscriptions.Domain.Model.Entities;
+using Mindflow_backend.Chat.Domain.Entities;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
 using EntryTag = Mindflow_backend.Journal.Domain.Entities.EntryTag;
 using Tag = Mindflow_backend.Journal.Domain.Entities.Tag;
@@ -37,6 +38,8 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
     public DbSet<AiFeedbackRating> AiFeedbackRatings => Set<AiFeedbackRating>();
     public DbSet<AiMetricLog> AiMetricLogs => Set<AiMetricLog>();
     public DbSet<CachedHabitSuggestion> CachedHabitSuggestions => Set<CachedHabitSuggestion>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -156,6 +159,27 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
             entity.HasKey(c => c.Id);
             entity.Property(c => c.SuggestionsJson).IsRequired().HasColumnType("TEXT");
             entity.HasIndex(c => c.UserId).IsUnique();
+        });
+
+        builder.Entity<Conversation>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Title).IsRequired().HasMaxLength(255);
+            entity.Property(c => c.Category).IsRequired().HasMaxLength(50);
+            entity.HasIndex(c => c.UserId);
+            entity.HasMany(c => c.Messages)
+                  .WithOne(m => m.Conversation)
+                  .HasForeignKey(m => m.ConversationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Role).IsRequired().HasMaxLength(20);
+            entity.Property(m => m.Content).IsRequired().HasColumnType("LONGTEXT")
+                  .HasConversion(encryptedConverter);
+            entity.HasIndex(m => m.ConversationId);
         });
 
         builder.UseSnakeCaseNamingConvention();
