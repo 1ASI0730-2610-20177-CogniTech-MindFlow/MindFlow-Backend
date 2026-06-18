@@ -14,6 +14,8 @@ using Mindflow_backend.Subscriptions.Application.Services;
 using Mindflow_backend.Subscriptions.Infrastructure.Services;
 using Mindflow_backend.Chat.Application.Services;
 using Mindflow_backend.Chat.Infrastructure.Services;
+using Mindflow_backend.Analytics.Application.Services;
+using Mindflow_backend.Analytics.Infrastructure.Services;
 using Mindflow_backend.Notifications.Application.Services;
 using Mindflow_backend.Analytics.Infrastructure.BackgroundServices;
 using Mindflow_backend.Notifications.Infrastructure.BackgroundServices;
@@ -148,6 +150,7 @@ builder.Services.AddScoped<INotificationService, FcmNotificationService>();
 builder.Services.AddHostedService<HydrationReminderService>();
 builder.Services.AddHostedService<WeeklySummaryScheduler>();
 builder.Services.AddScoped<AnalyticsComputationService>();
+builder.Services.AddScoped<IAnalyticsCacheInvalidator, AnalyticsCacheInvalidator>();
 builder.Services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();
 builder.Services.AddHttpContextAccessor();
 
