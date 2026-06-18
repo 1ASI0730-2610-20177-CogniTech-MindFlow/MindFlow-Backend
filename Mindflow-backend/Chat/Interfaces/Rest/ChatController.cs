@@ -6,7 +6,7 @@ using Mindflow_backend.Chat.Application.Services;
 namespace Mindflow_backend.Chat.Interfaces.Rest;
 
 [ApiController]
-[Route("api/v1/chat")]
+[Route("chat")]
 [Authorize]
 public class ChatController(IChatService chatService) : ControllerBase
 {
