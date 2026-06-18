@@ -99,7 +99,7 @@ public class GeminiService(
 
         try
         {
-            var maxTokens = operation == "habit_suggestions" ? 1024 : 512;
+            var maxTokens = operation == "habit_suggestions" ? 8192 : 4096;
 
             var requestBody = new
             {

@@ -107,11 +107,11 @@ public class StripeSubscriptionService(
         }
 
         var metadataUserId = session.Metadata?.GetValueOrDefault("user_id");
-        if (metadataUserId != userId.ToString())
+        if (!string.Equals(metadataUserId, userId.ToString(), StringComparison.Ordinal))
         {
             logger.LogWarning("Session {SessionId} user_id mismatch: expected {Expected}, got {Got}",
                 sessionId, userId, metadataUserId);
-            return await GetByUserIdAsync(userId, ct);
+            throw new StripeException("Session does not belong to this user.");
         }
 
         await ActivateAsync(userId, session.CustomerId, session.SubscriptionId, ct);
