@@ -7,6 +7,7 @@ using Mindflow_backend.AiIntegration.Application.Services;
 using Mindflow_backend.Habits.Application.Internal.CommandServices;
 using Mindflow_backend.Habits.Application.Internal.QueryServices;
 using Mindflow_backend.Habits.Application.Queries.Habits;
+using Mindflow_backend.Habits.Domain.Model.Entities;
 using Mindflow_backend.Habits.Interfaces.Rest.Assemblers;
 using Mindflow_backend.Habits.Interfaces.Rest.Resources.Habits;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
@@ -69,6 +70,10 @@ public class HabitsController : ControllerBase
         var resourceWithUser = resource with { UserId = userId };
         var command = CreateHabitCommandFromResourceAssembler.ToCommandFromResource(resourceWithUser);
         var result = await _habitCommandService.Handle(command, cancellationToken);
+
+        if (result.IsSuccess)
+            await InvalidateSuggestionsCacheAsync(userId, cancellationToken);
+
         return HabitsActionResultAssembler.ToActionResultFromCreateResult(this, result, _problemDetailsFactory,
             h => CreatedAtAction(nameof(GetHabitById), new { id = h.Id }, HabitResourceFromEntityAssembler.ToResourceFromEntity(h)));
     }
@@ -79,6 +84,10 @@ public class HabitsController : ControllerBase
         var userId = GetAuthenticatedUserId();
         var command = UpdateHabitCommandFromResourceAssembler.ToCommandFromResource(id, userId, resource);
         var result = await _habitCommandService.Handle(command, cancellationToken);
+
+        if (result.IsSuccess)
+            await InvalidateSuggestionsCacheAsync(userId, cancellationToken);
+
         return HabitsActionResultAssembler.ToActionResultFromCreateResult(this, result, _problemDetailsFactory,
             h => Ok(HabitResourceFromEntityAssembler.ToResourceFromEntity(h)));
     }
@@ -89,6 +98,10 @@ public class HabitsController : ControllerBase
         var userId = GetAuthenticatedUserId();
         var command = new Habits.Application.Commands.Habits.DeleteHabitCommand(id, userId);
         var result = await _habitCommandService.Handle(command, cancellationToken);
+
+        if (result.IsSuccess)
+            await InvalidateSuggestionsCacheAsync(userId, cancellationToken);
+
         return HabitsActionResultAssembler.ToActionResultFromDeleteResult(this, result, _problemDetailsFactory);
     }
 
@@ -115,12 +128,24 @@ public class HabitsController : ControllerBase
     {
         var userId = GetAuthenticatedUserId();
 
+        var cached = await _dbContext.CachedHabitSuggestions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+
+        if (cached != null && cached.GeneratedAt > DateTimeOffset.UtcNow.AddHours(-24))
+        {
+            var cachedList = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(cached.SuggestionsJson);
+            if (cachedList != null)
+                return Ok(new { suggestions = cachedList });
+        }
+
         var habits = await _habitQueryService.Handle(new GetAllHabitsByUserIdQuery(userId), cancellationToken);
         var habitNames = habits.Select(h => h.Name).ToList();
+        var habitIds = habits.Select(h => h.Id).ToList();
 
-        var totalLogs = await _dbContext.Set<Mindflow_backend.Habits.Domain.Model.Entities.HabitCompletionLog>()
-            .CountAsync(l => habits.Select(h => h.Id).Contains(l.HabitId), cancellationToken);
-        var completionRate = habits.Any() ? (int)((double)totalLogs / (habits.Count() * 7) * 100) : 0;
+        var totalLogs = await _dbContext.Set<HabitCompletionLog>()
+            .CountAsync(l => habitIds.Contains(l.HabitId), cancellationToken);
+        var completionRate = habitIds.Count > 0 ? (int)((double)totalLogs / (habitIds.Count * 7) * 100) : 0;
         if (completionRate > 100) completionRate = 100;
 
         var recentEntries = await _dbContext.JournalEntries
@@ -147,18 +172,61 @@ public class HabitsController : ControllerBase
         if (string.IsNullOrEmpty(aiResponse))
             return Ok(new { suggestions = FallbackSuggestions(stressLevel, habitNames) });
 
+        List<Dictionary<string, string>>? suggestions;
         try
         {
             var cleaned = aiResponse.Trim();
-            if (cleaned.StartsWith("```")) cleaned = cleaned.Split('\n', 3).Length > 1
-                ? cleaned[(cleaned.IndexOf('\n') + 1)..cleaned.LastIndexOf("```")] : cleaned;
+            if (cleaned.StartsWith("```"))
+            {
+                var closingIndex = cleaned.LastIndexOf("```");
+                var firstNewline = cleaned.IndexOf('\n');
+                if (closingIndex > firstNewline && firstNewline >= 0)
+                    cleaned = cleaned[(firstNewline + 1)..closingIndex];
+            }
 
-            var suggestions = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(cleaned.Trim());
-            return Ok(new { suggestions });
+            suggestions = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(cleaned.Trim());
         }
-        catch
+        catch (JsonException)
         {
             return Ok(new { suggestions = FallbackSuggestions(stressLevel, habitNames) });
+        }
+
+        if (suggestions == null || suggestions.Count == 0)
+            return Ok(new { suggestions = FallbackSuggestions(stressLevel, habitNames) });
+
+        try
+        {
+            var json = JsonSerializer.Serialize(suggestions);
+            await _dbContext.CachedHabitSuggestions
+                .Where(c => c.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken);
+            _dbContext.CachedHabitSuggestions.Add(new CachedHabitSuggestion
+            {
+                UserId = userId,
+                SuggestionsJson = json,
+                GeneratedAt = DateTimeOffset.UtcNow
+            });
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // Cache persistence is best-effort; return AI result regardless
+        }
+
+        return Ok(new { suggestions });
+    }
+
+    private async Task InvalidateSuggestionsCacheAsync(int userId, CancellationToken ct)
+    {
+        try
+        {
+            await _dbContext.CachedHabitSuggestions
+                .Where(c => c.UserId == userId)
+                .ExecuteDeleteAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Best-effort cache invalidation
         }
     }
 

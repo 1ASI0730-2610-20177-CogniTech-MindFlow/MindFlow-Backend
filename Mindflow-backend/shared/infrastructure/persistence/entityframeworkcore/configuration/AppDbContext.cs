@@ -12,6 +12,7 @@ using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Int
 using Mindflow_backend.AiFeedback.Domain.Model.Entities;
 using Mindflow_backend.AiIntegration.Domain.Model.Entities;
 using Mindflow_backend.Support.Domain.Model.Entities;
+using Mindflow_backend.Habits.Domain.Model.Entities;
 using Mindflow_backend.Subscriptions.Domain.Model.Entities;
 using JournalEntry = Mindflow_backend.Journal.Domain.Entities.JournalEntry;
 using EntryTag = Mindflow_backend.Journal.Domain.Entities.EntryTag;
@@ -35,6 +36,7 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
     public DbSet<AiFeedbackRating> AiFeedbackRatings => Set<AiFeedbackRating>();
     public DbSet<AiMetricLog> AiMetricLogs => Set<AiMetricLog>();
+    public DbSet<CachedHabitSuggestion> CachedHabitSuggestions => Set<CachedHabitSuggestion>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -147,6 +149,13 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
             entity.Property(m => m.Operation).IsRequired().HasMaxLength(50);
             entity.Property(m => m.ErrorMessage).HasMaxLength(500);
             entity.HasIndex(m => m.CreatedAt);
+        });
+
+        builder.Entity<CachedHabitSuggestion>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.SuggestionsJson).IsRequired().HasColumnType("TEXT");
+            entity.HasIndex(c => c.UserId).IsUnique();
         });
 
         builder.UseSnakeCaseNamingConvention();
