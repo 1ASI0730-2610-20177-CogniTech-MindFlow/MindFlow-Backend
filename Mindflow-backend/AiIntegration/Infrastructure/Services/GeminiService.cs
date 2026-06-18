@@ -13,8 +13,8 @@ public class GeminiService(
     ILogger<GeminiService> logger,
     AppDbContext dbContext) : IAiService
 {
-    private const string ApiBase =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private string ApiBase =>
+        $"https://generativelanguage.googleapis.com/v1beta/models/{configuration["AiSettings:GeminiModel"] ?? "gemini-2.0-flash"}:generateContent";
 
     public async Task<string> GenerateEmpathicResponseAsync(string content, string sentiment)
     {
@@ -86,7 +86,11 @@ public class GeminiService(
     private async Task<string> CallGeminiAsync(string prompt, string operation)
     {
         var apiKey = configuration["AiSettings:GeminiApiKey"];
-        if (string.IsNullOrWhiteSpace(apiKey)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            logger.LogWarning("AiSettings:GeminiApiKey is not configured — skipping {Operation}.", operation);
+            return string.Empty;
+        }
 
         var sw = Stopwatch.StartNew();
         string? errorMsg = null;
@@ -95,13 +99,15 @@ public class GeminiService(
 
         try
         {
+            var maxTokens = operation == "habit_suggestions" ? 1024 : 512;
+
             var requestBody = new
             {
                 contents = new[]
                 {
                     new { parts = new[] { new { text = prompt } } }
                 },
-                generationConfig = new { temperature = 0.7, maxOutputTokens = 250 }
+                generationConfig = new { temperature = 0.7, maxOutputTokens = maxTokens }
             };
 
             var json = JsonSerializer.Serialize(requestBody);
@@ -112,7 +118,9 @@ public class GeminiService(
 
             if (!response.IsSuccessStatusCode)
             {
-                errorMsg = $"HTTP {(int)response.StatusCode}";
+                var errorBody = await response.Content.ReadAsStringAsync();
+                errorMsg = $"HTTP {(int)response.StatusCode}: {errorBody[..Math.Min(errorBody.Length, 500)]}";
+                logger.LogWarning("Gemini API error for {Operation}: {Error}", operation, errorMsg);
                 return string.Empty;
             }
 
@@ -132,7 +140,7 @@ public class GeminiService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Gemini API call failed — returning empty response.");
+            logger.LogWarning(ex, "Gemini API call failed for {Operation}.", operation);
             errorMsg = ex.Message[..Math.Min(ex.Message.Length, 500)];
             return string.Empty;
         }

@@ -58,14 +58,27 @@ public class StripeSubscriptionService(
             throw;
         }
 
+        logger.LogInformation("Stripe webhook received: {EventType}, id={EventId}", stripeEvent.Type, stripeEvent.Id);
+
         switch (stripeEvent.Type)
         {
             case EventTypes.CheckoutSessionCompleted:
                 var session = (Session)stripeEvent.Data.Object;
+                logger.LogInformation(
+                    "Checkout session completed: sessionId={SessionId}, customerId={CustomerId}, subscriptionId={SubscriptionId}, paymentStatus={PaymentStatus}, metadataKeys={MetadataKeys}",
+                    session.Id, session.CustomerId, session.SubscriptionId, session.PaymentStatus,
+                    session.Metadata != null ? string.Join(",", session.Metadata.Keys) : "null");
+
                 if (session.Metadata?.TryGetValue("user_id", out var userIdStr) == true
                     && int.TryParse(userIdStr, out var userId))
                 {
                     await ActivateAsync(userId, session.CustomerId, session.SubscriptionId, ct);
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Could not extract user_id from checkout session metadata. SessionId={SessionId}",
+                        session.Id);
                 }
                 break;
 
@@ -79,6 +92,30 @@ public class StripeSubscriptionService(
                 await MarkPastDueByStripeCustomerAsync(invoice.CustomerId, ct);
                 break;
         }
+    }
+
+    public async Task<SubscriptionDto> VerifySessionAsync(int userId, string sessionId, CancellationToken ct = default)
+    {
+        var client = new StripeClient(configuration["Stripe:SecretKey"]);
+        var sessionService = new SessionService(client);
+        var session = await sessionService.GetAsync(sessionId, cancellationToken: ct);
+
+        if (session.PaymentStatus != "paid")
+        {
+            logger.LogInformation("Session {SessionId} payment not completed yet: {Status}", sessionId, session.PaymentStatus);
+            return await GetByUserIdAsync(userId, ct);
+        }
+
+        var metadataUserId = session.Metadata?.GetValueOrDefault("user_id");
+        if (metadataUserId != userId.ToString())
+        {
+            logger.LogWarning("Session {SessionId} user_id mismatch: expected {Expected}, got {Got}",
+                sessionId, userId, metadataUserId);
+            return await GetByUserIdAsync(userId, ct);
+        }
+
+        await ActivateAsync(userId, session.CustomerId, session.SubscriptionId, ct);
+        return await GetByUserIdAsync(userId, ct);
     }
 
     public async Task<SubscriptionDto> GetByUserIdAsync(int userId, CancellationToken ct = default)
