@@ -206,6 +206,24 @@ public class StripeSubscriptionService(
             userId, sub.Plan, sub.Status);
     }
 
+    public async Task CancelAsync(int userId, CancellationToken ct = default)
+    {
+        var sub = await dbContext.Subscriptions.FirstOrDefaultAsync(s => s.UserId == userId, ct);
+        if (sub is null || sub.Status == "canceled")
+            throw new StripeException("No active subscription found.");
+
+        if (!string.IsNullOrEmpty(sub.StripeSubscriptionId))
+        {
+            var client = new StripeClient(configuration["Stripe:SecretKey"]);
+            var service = new Stripe.SubscriptionService(client);
+            await service.CancelAsync(sub.StripeSubscriptionId, cancellationToken: ct);
+        }
+
+        sub.Cancel();
+        await unitOfWork.CompleteAsync(ct);
+        logger.LogInformation("Subscription canceled by user {UserId}.", userId);
+    }
+
     private async Task ActivateByStripeCustomerAsync(string customerId, string subscriptionId, CancellationToken ct)
     {
         var sub = await dbContext.Subscriptions
