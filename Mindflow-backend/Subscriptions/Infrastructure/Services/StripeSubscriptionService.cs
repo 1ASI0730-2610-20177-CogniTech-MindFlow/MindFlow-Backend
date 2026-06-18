@@ -96,14 +96,24 @@ public class StripeSubscriptionService(
 
     public async Task<SubscriptionDto> VerifySessionAsync(int userId, string sessionId, CancellationToken ct = default)
     {
+        logger.LogInformation("VerifySession called: userId={UserId}, sessionId={SessionId}", userId, sessionId);
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+            throw new StripeException("session_id is required.");
+
         var client = new StripeClient(configuration["Stripe:SecretKey"]);
         var sessionService = new SessionService(client);
         var session = await sessionService.GetAsync(sessionId, cancellationToken: ct);
 
+        logger.LogInformation(
+            "Stripe session retrieved: paymentStatus={PaymentStatus}, customerId={CustomerId}, subscriptionId={SubscriptionId}, mode={Mode}, metadataKeys={Keys}",
+            session.PaymentStatus, session.CustomerId, session.SubscriptionId, session.Mode,
+            session.Metadata != null ? string.Join(",", session.Metadata.Keys) : "null");
+
         if (session.PaymentStatus != "paid")
         {
-            logger.LogInformation("Session {SessionId} payment not completed yet: {Status}", sessionId, session.PaymentStatus);
-            return await GetByUserIdAsync(userId, ct);
+            logger.LogWarning("Session {SessionId} payment not completed: {Status}", sessionId, session.PaymentStatus);
+            throw new StripeException($"Payment not completed. Status: {session.PaymentStatus}");
         }
 
         var metadataUserId = session.Metadata?.GetValueOrDefault("user_id");
@@ -115,7 +125,11 @@ public class StripeSubscriptionService(
         }
 
         await ActivateAsync(userId, session.CustomerId, session.SubscriptionId, ct);
-        return await GetByUserIdAsync(userId, ct);
+
+        var result = await GetByUserIdAsync(userId, ct);
+        logger.LogInformation("VerifySession result: userId={UserId}, plan={Plan}, isPremium={IsPremium}",
+            userId, result.Plan, result.IsPremium);
+        return result;
     }
 
     public async Task<SubscriptionDto> GetByUserIdAsync(int userId, CancellationToken ct = default)
