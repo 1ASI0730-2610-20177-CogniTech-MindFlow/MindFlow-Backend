@@ -63,23 +63,17 @@ public class StripeSubscriptionService(
         switch (stripeEvent.Type)
         {
             case EventTypes.CheckoutSessionCompleted:
-                var session = (Session)stripeEvent.Data.Object;
-                logger.LogInformation(
-                    "Checkout session completed: sessionId={SessionId}, customerId={CustomerId}, subscriptionId={SubscriptionId}, paymentStatus={PaymentStatus}, metadataKeys={MetadataKeys}",
-                    session.Id, session.CustomerId, session.SubscriptionId, session.PaymentStatus,
-                    session.Metadata != null ? string.Join(",", session.Metadata.Keys) : "null");
+                await HandleCheckoutSessionCompleted((Session)stripeEvent.Data.Object, ct);
+                break;
 
-                if (session.Metadata?.TryGetValue("user_id", out var userIdStr) == true
-                    && int.TryParse(userIdStr, out var userId))
-                {
-                    await ActivateAsync(userId, session.CustomerId, session.SubscriptionId, ct);
-                }
-                else
-                {
-                    logger.LogWarning(
-                        "Could not extract user_id from checkout session metadata. SessionId={SessionId}",
-                        session.Id);
-                }
+            case EventTypes.CustomerSubscriptionUpdated:
+                var updated = (Stripe.Subscription)stripeEvent.Data.Object;
+                if (updated.Status == "active")
+                    await ActivateByStripeCustomerAsync(updated.CustomerId, updated.Id, ct);
+                else if (updated.Status == "past_due")
+                    await MarkPastDueByStripeCustomerAsync(updated.CustomerId, ct);
+                else if (updated.Status == "canceled" || updated.Status == "unpaid")
+                    await CancelByStripeCustomerAsync(updated.CustomerId, ct);
                 break;
 
             case EventTypes.CustomerSubscriptionDeleted:
@@ -91,6 +85,35 @@ public class StripeSubscriptionService(
                 var invoice = (Invoice)stripeEvent.Data.Object;
                 await MarkPastDueByStripeCustomerAsync(invoice.CustomerId, ct);
                 break;
+
+            case EventTypes.InvoicePaymentSucceeded:
+                var paidInvoice = (Invoice)stripeEvent.Data.Object;
+                await ReactivateByStripeCustomerAsync(paidInvoice.CustomerId, ct);
+                break;
+
+            default:
+                logger.LogDebug("Unhandled Stripe event type: {EventType}", stripeEvent.Type);
+                break;
+        }
+    }
+
+    private async Task HandleCheckoutSessionCompleted(Session session, CancellationToken ct)
+    {
+        logger.LogInformation(
+            "Checkout session completed: sessionId={SessionId}, customerId={CustomerId}, subscriptionId={SubscriptionId}, paymentStatus={PaymentStatus}, metadataKeys={MetadataKeys}",
+            session.Id, session.CustomerId, session.SubscriptionId, session.PaymentStatus,
+            session.Metadata != null ? string.Join(",", session.Metadata.Keys) : "null");
+
+        if (session.Metadata?.TryGetValue("user_id", out var userIdStr) == true
+            && int.TryParse(userIdStr, out var userId))
+        {
+            await ActivateAsync(userId, session.CustomerId, session.SubscriptionId, ct);
+        }
+        else
+        {
+            logger.LogWarning(
+                "Could not extract user_id from checkout session metadata. SessionId={SessionId}",
+                session.Id);
         }
     }
 
@@ -153,6 +176,10 @@ public class StripeSubscriptionService(
 
     private async Task ActivateAsync(int userId, string customerId, string subscriptionId, CancellationToken ct)
     {
+        logger.LogInformation(
+            "ActivateAsync starting: userId={UserId}, customerId={CustomerId}, subscriptionId={SubscriptionId}",
+            userId, customerId, subscriptionId);
+
         var sub = await dbContext.Subscriptions.FirstOrDefaultAsync(s => s.UserId == userId, ct);
         if (sub is null)
         {
@@ -160,8 +187,48 @@ public class StripeSubscriptionService(
             dbContext.Subscriptions.Add(sub);
         }
         sub.Activate(customerId, subscriptionId);
+
+        try
+        {
+            await unitOfWork.CompleteAsync(ct);
+        }
+        catch (DbUpdateException) when (sub.Id == 0)
+        {
+            dbContext.Entry(sub).State = EntityState.Detached;
+            sub = await dbContext.Subscriptions.FirstOrDefaultAsync(s => s.UserId == userId, ct);
+            if (sub is null) throw;
+            sub.Activate(customerId, subscriptionId);
+            await unitOfWork.CompleteAsync(ct);
+        }
+
+        logger.LogInformation(
+            "Premium activated for user {UserId}: plan={Plan}, status={Status}",
+            userId, sub.Plan, sub.Status);
+    }
+
+    private async Task ActivateByStripeCustomerAsync(string customerId, string subscriptionId, CancellationToken ct)
+    {
+        var sub = await dbContext.Subscriptions
+            .FirstOrDefaultAsync(s => s.StripeCustomerId == customerId, ct);
+        if (sub is null)
+        {
+            logger.LogWarning("No subscription found for Stripe customer {CustomerId} — skipping activation.", customerId);
+            return;
+        }
+        sub.Activate(customerId, subscriptionId);
         await unitOfWork.CompleteAsync(ct);
-        logger.LogInformation("Premium activated for user {UserId}.", userId);
+        logger.LogInformation("Premium re-activated for user {UserId} via customer {CustomerId}.", sub.UserId, customerId);
+    }
+
+    private async Task ReactivateByStripeCustomerAsync(string customerId, CancellationToken ct)
+    {
+        var sub = await dbContext.Subscriptions
+            .FirstOrDefaultAsync(s => s.StripeCustomerId == customerId, ct);
+        if (sub is null) return;
+        sub.Plan = "premium";
+        sub.Status = "active";
+        await unitOfWork.CompleteAsync(ct);
+        logger.LogInformation("Subscription reactivated via invoice.payment_succeeded for customer {CustomerId}.", customerId);
     }
 
     private async Task CancelByStripeCustomerAsync(string customerId, CancellationToken ct)
