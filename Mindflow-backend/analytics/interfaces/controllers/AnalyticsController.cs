@@ -20,8 +20,36 @@ public sealed class AnalyticsController(
     public async Task<IActionResult> GetAnalyticsCache([FromQuery] DateOnly? weekStart)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
-        var query = new GetAnalyticsCacheQuery { UserId = userId, WeekStart = weekStart };
+        var start = weekStart ?? GetCurrentWeekStart();
+
+        var query = new GetAnalyticsCacheQuery { UserId = userId, WeekStart = start };
         var result = await mediator.QueryAsync(query);
+
+        if (result.IsSuccess && result.Value!.Count == 0)
+        {
+            var cache = await computationService.ComputeAndSaveWeeklyAsync(userId, start);
+            return Ok(new List<object>
+            {
+                new
+                {
+                    cache.Id,
+                    cache.UserId,
+                    cache.WeekStart,
+                    cache.Score,
+                    cache.TrendPercentage,
+                    cache.StartDate,
+                    cache.EndDate,
+                    cache.AiInsight,
+                    cache.AiInsightLocalized,
+                    Kpis = cache.Kpis,
+                    FluctuationData = cache.FluctuationData,
+                    TrendData = cache.TrendData,
+                    cache.CreatedAt,
+                    cache.UpdatedAt
+                }
+            });
+        }
+
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 
@@ -73,6 +101,18 @@ public sealed class AnalyticsController(
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
         var query = new GetWordCloudQuery { UserId = userId };
         var result = await mediator.QueryAsync(query);
+
+        if (result.IsSuccess && string.Equals(result.Value!.Words, "[]"))
+        {
+            var wordCloud = await computationService.ComputeAndSaveWordCloudAsync(userId);
+            return Ok(new WordCloudDto
+            {
+                Id = wordCloud.Id,
+                UserId = wordCloud.UserId,
+                Words = wordCloud.Words
+            });
+        }
+
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
 

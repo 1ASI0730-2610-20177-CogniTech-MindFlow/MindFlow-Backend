@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -9,7 +10,8 @@ namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class CreateJournalEntryHandler(
     IBaseRepository<JournalEntry> repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<CreateJournalEntryCommand, Result<JournalEntryDto>>
+    IUnitOfWork unitOfWork,
+    IAnalyticsCacheInvalidator cacheInvalidator) : ICommandHandler<CreateJournalEntryCommand, Result<JournalEntryDto>>
 {
     private static readonly string[] PositiveWords =
         ["feliz", "bien", "genial", "excelente", "alegre", "contento", "motivado", "logré",
@@ -45,6 +47,7 @@ public class CreateJournalEntryHandler(
 
         await repository.AddAsync(entry, ct);
         await unitOfWork.CompleteAsync(ct);
+        await cacheInvalidator.InvalidateAsync(request.UserId, ct);
 
         return Result<JournalEntryDto>.Success(Map(entry));
     }

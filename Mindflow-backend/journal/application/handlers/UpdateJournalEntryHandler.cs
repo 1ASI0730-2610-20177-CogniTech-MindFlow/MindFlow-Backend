@@ -1,8 +1,9 @@
 using Cortex.Mediator.Commands;
+using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Domain.Entities;
-using Mindflow_backend.Journal.Domain.Model;  
+using Mindflow_backend.Journal.Domain.Model;
 using Mindflow_backend.Shared.Application.Model;
 using Mindflow_backend.Shared.Domain.Repositories;
 
@@ -10,7 +11,8 @@ namespace Mindflow_backend.Journal.Application.Handlers;
 
 public class UpdateJournalEntryHandler(
     IBaseRepository<JournalEntry> repository,
-    IUnitOfWork unitOfWork) : ICommandHandler<UpdateJournalEntryCommand, Result<JournalEntryDto>>
+    IUnitOfWork unitOfWork,
+    IAnalyticsCacheInvalidator cacheInvalidator) : ICommandHandler<UpdateJournalEntryCommand, Result<JournalEntryDto>>
 {
     public async Task<Result<JournalEntryDto>> Handle(UpdateJournalEntryCommand request, CancellationToken ct)
     {
@@ -27,6 +29,7 @@ public class UpdateJournalEntryHandler(
 
         repository.Update(entry);
         await unitOfWork.CompleteAsync(ct);
+        await cacheInvalidator.InvalidateAsync(entry.UserId, ct);
 
         return Result<JournalEntryDto>.Success(Map(entry));
     }

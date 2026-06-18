@@ -1,4 +1,5 @@
 using Moq;
+using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Handlers;
 using Mindflow_backend.Journal.Domain.Entities;
@@ -10,9 +11,10 @@ public class CreateJournalEntryHandlerTests
 {
     private readonly Mock<IBaseRepository<JournalEntry>> _repo = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IAnalyticsCacheInvalidator> _cacheInvalidator = new();
 
     private CreateJournalEntryHandler CreateHandler() =>
-        new(_repo.Object, _unitOfWork.Object);
+        new(_repo.Object, _unitOfWork.Object, _cacheInvalidator.Object);
 
     [Fact]
     public async Task Handle_WithPositiveContent_DetectsPositiveSentiment()
