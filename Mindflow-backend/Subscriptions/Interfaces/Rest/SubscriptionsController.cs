@@ -7,7 +7,7 @@ using Stripe;
 namespace Mindflow_backend.Subscriptions.Interfaces.Rest;
 
 [ApiController]
-[Route("subscriptions")]
+[Route("api/v1/[controller]")]
 public sealed class SubscriptionsController(ISubscriptionService subscriptionService) : ControllerBase
 {
     [HttpPost("checkout")]
