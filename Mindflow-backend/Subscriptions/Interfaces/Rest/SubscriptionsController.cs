@@ -37,6 +37,23 @@ public sealed class SubscriptionsController(ISubscriptionService subscriptionSer
         return Ok(result);
     }
 
+    [HttpPost("verify-session")]
+    [Authorize]
+    public async Task<IActionResult> VerifySession([FromQuery] string sessionId, CancellationToken ct)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        try
+        {
+            var result = await subscriptionService.VerifySessionAsync(userId, sessionId, ct);
+            return Ok(result);
+        }
+        catch (StripeException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPost("webhook")]
     [AllowAnonymous]
     public async Task<IActionResult> Webhook(CancellationToken ct)
