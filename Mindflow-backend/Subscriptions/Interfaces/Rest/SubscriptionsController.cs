@@ -64,11 +64,12 @@ public sealed class SubscriptionsController(ISubscriptionService subscriptionSer
         try
         {
             await subscriptionService.HandleWebhookAsync(payload, signature, ct);
-            return Ok();
         }
         catch (StripeException)
         {
             return BadRequest();
         }
+
+        return Ok();
     }
 }
