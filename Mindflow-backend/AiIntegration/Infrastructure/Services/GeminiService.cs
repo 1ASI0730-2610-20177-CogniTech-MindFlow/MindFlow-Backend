@@ -83,6 +83,38 @@ public class GeminiService(
         return await CallGeminiAsync(prompt, "habit_suggestions");
     }
 
+    public async Task<string> GenerateChatResponseAsync(
+        IEnumerable<(string Role, string Content)> conversationHistory)
+    {
+        var messages = conversationHistory.ToList();
+        if (messages.Count == 0) return string.Empty;
+
+        var historyText = new StringBuilder();
+        foreach (var (role, content) in messages)
+        {
+            var label = role == "user" ? "Usuario" : "Asistente";
+            var snippet = content.Length > 300 ? content[..300] + "..." : content;
+            historyText.AppendLine($"{label}: {snippet}");
+        }
+
+        var prompt = $"""
+            Eres un asistente de bienestar mental empático y profesional llamado MindFlow. Tu rol es:
+            - Escuchar activamente y validar las emociones del usuario sin juzgar.
+            - Ofrecer apoyo emocional cálido y sugerencias prácticas cuando sea apropiado.
+            - Hacer preguntas abiertas para entender mejor cómo se siente el usuario.
+            - Si el usuario menciona pensamientos de autolesión o crisis, recomendar buscar ayuda profesional.
+            - Responder siempre en español, de forma breve (2-4 oraciones), cálida y conversacional.
+            - No uses encabezados, listas ni formato markdown. Responde como en una conversación natural.
+
+            Historial de la conversación:
+            {historyText}
+
+            Responde al último mensaje del usuario de forma empática y coherente con el contexto de la conversación.
+            """;
+
+        return await CallGeminiAsync(prompt, "chat_response");
+    }
+
     private async Task<string> CallGeminiAsync(string prompt, string operation)
     {
         var apiKey = configuration["AiSettings:GeminiApiKey"];

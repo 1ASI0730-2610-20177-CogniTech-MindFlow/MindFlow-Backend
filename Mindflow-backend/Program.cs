@@ -12,6 +12,8 @@ using Mindflow_backend.AiIntegration.Infrastructure.Services;
 using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Subscriptions.Application.Services;
 using Mindflow_backend.Subscriptions.Infrastructure.Services;
+using Mindflow_backend.Chat.Application.Services;
+using Mindflow_backend.Chat.Infrastructure.Services;
 using Mindflow_backend.Notifications.Application.Services;
 using Mindflow_backend.Analytics.Infrastructure.BackgroundServices;
 using Mindflow_backend.Notifications.Infrastructure.BackgroundServices;
@@ -137,6 +139,7 @@ builder.Services.AddScoped<IHabitQueryService, HabitQueryService>();
 builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
 builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddHttpClient("Gemini");
 builder.Services.AddHttpClient("Fcm");
 builder.Services.AddScoped<IAiService, GeminiService>();
