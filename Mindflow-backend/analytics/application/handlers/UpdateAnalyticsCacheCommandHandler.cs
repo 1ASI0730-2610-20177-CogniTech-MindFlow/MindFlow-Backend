@@ -15,7 +15,7 @@ public class UpdateAnalyticsCacheCommandHandler(AppDbContext dbContext)
     public async Task<Result<AnalyticsCacheDto>> Handle(UpdateAnalyticsCacheCommand request, CancellationToken ct)
     {
         var cache = await dbContext.AnalyticsCaches
-            .FirstOrDefaultAsync(c => c.Id == request.Id, ct);
+            .FirstOrDefaultAsync(c => c.Id == request.Id && c.UserId == request.UserId, ct);
 
         if (cache is null)
             return Result<AnalyticsCacheDto>.Failure(

@@ -155,7 +155,8 @@ public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiSe
 
     private static string CalculateTrend(int prevScore, int currentScore)
     {
-        if (prevScore == 0) return "+0%";
+        if (prevScore == 0 && currentScore == 0) return "+0%";
+        if (prevScore == 0) return "+100%";
         var diff = ((double)currentScore - prevScore) / prevScore * 100;
         return $"{(diff >= 0 ? "+" : "")}{diff:F0}%";
     }
@@ -212,6 +213,14 @@ public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiSe
 
     private async Task<string> BuildTrendDataAsync(int userId, DateOnly weekStart)
     {
+        var rangeStart = weekStart.AddDays(-3 * 7);
+        var rangeEnd = weekStart.AddDays(6);
+
+        var allEntries = await dbContext.JournalEntries
+            .AsNoTracking()
+            .Where(e => e.UserId == userId && e.Date >= rangeStart && e.Date <= rangeEnd)
+            .ToListAsync();
+
         var scores = new List<double>();
         var labels = new List<string>();
 
@@ -219,10 +228,7 @@ public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiSe
         {
             var start = weekStart.AddDays(-i * 7);
             var end = start.AddDays(6);
-            var weekEntries = await dbContext.JournalEntries
-                .AsNoTracking()
-                .Where(e => e.UserId == userId && e.Date >= start && e.Date <= end)
-                .ToListAsync();
+            var weekEntries = allEntries.Where(e => e.Date >= start && e.Date <= end).ToList();
 
             var score = weekEntries.Count > 0
                 ? weekEntries.Average(e => e.Sentiment?.ToLower() switch
@@ -234,7 +240,7 @@ public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiSe
                 : 5.0;
 
             scores.Add(Math.Round(score, 1));
-            labels.Add($"Sem {i + 1}");
+            labels.Add($"Sem {4 - i}");
         }
 
         var chart = new

@@ -112,6 +112,16 @@ public sealed class JournalController(IMediator mediator, IFileStorageService fi
     [HttpGet("entry-tags")]
     public async Task<IActionResult> GetEntryTags([FromQuery] int? entryId)
     {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        if (entryId.HasValue)
+        {
+            var entryQuery = new GetJournalEntryByIdQuery { Id = entryId.Value };
+            var entryResult = await mediator.QueryAsync(entryQuery);
+            if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
+                return NotFound();
+        }
+
         var query = new GetEntryTagsQuery { EntryId = entryId };
         var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
@@ -134,6 +144,19 @@ public sealed class JournalController(IMediator mediator, IFileStorageService fi
     [HttpDelete("entry-tags/{id}")]
     public async Task<IActionResult> DeleteEntryTag(int id)
     {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        var tagsQuery = new GetEntryTagsQuery { EntryId = null };
+        var tagsResult = await mediator.QueryAsync(tagsQuery);
+        var tag = tagsResult.Value?.FirstOrDefault(t => t.Id == id);
+        if (tag is not null)
+        {
+            var entryQuery = new GetJournalEntryByIdQuery { Id = tag.EntryId };
+            var entryResult = await mediator.QueryAsync(entryQuery);
+            if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
+                return NotFound();
+        }
+
         var command = new DeleteEntryTagCommand { Id = id };
         var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok() : BadRequest(result.Message);
@@ -142,6 +165,16 @@ public sealed class JournalController(IMediator mediator, IFileStorageService fi
     [HttpGet("media")]
     public async Task<IActionResult> GetMedia([FromQuery] int? entryId)
     {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        if (entryId.HasValue)
+        {
+            var entryQuery = new GetJournalEntryByIdQuery { Id = entryId.Value };
+            var entryResult = await mediator.QueryAsync(entryQuery);
+            if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
+                return NotFound();
+        }
+
         var query = new GetMediaQuery { EntryId = entryId };
         var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);

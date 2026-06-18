@@ -28,6 +28,7 @@ public sealed class AnalyticsController(
     [HttpPost("analyticsCache")]
     public async Task<IActionResult> CreateAnalyticsCache([FromBody] CreateAnalyticsCacheCommand command)
     {
+        command.UserId = int.Parse(User.FindFirst("user_id")!.Value);
         var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
@@ -36,6 +37,7 @@ public sealed class AnalyticsController(
     public async Task<IActionResult> UpdateAnalyticsCache(int id, [FromBody] UpdateAnalyticsCacheCommand command)
     {
         command.Id = id;
+        command.UserId = int.Parse(User.FindFirst("user_id")!.Value);
         var result = await mediator.SendAsync(command);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }

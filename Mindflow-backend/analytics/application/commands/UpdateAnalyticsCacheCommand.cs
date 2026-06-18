@@ -8,6 +8,7 @@ namespace Mindflow_backend.Analytics.Application.Commands;
 public class UpdateAnalyticsCacheCommand : ICommand<Result<AnalyticsCacheDto>>
 {
     public int Id { get; set; }
+    public int UserId { get; set; }
     public int Score { get; set; }
     public string TrendPercentage { get; set; } = "+0%";
     public DateOnly? StartDate { get; set; }

@@ -37,19 +37,7 @@ public class ReportingController(IReportingService reportingService, AppDbContex
 
     private async Task<bool> IsPremiumAsync(int userId)
     {
-        try
-        {
-            var result = await db.Database
-                .SqlQueryRaw<int>(
-                    "SELECT COUNT(*) AS Value FROM subscriptions WHERE user_id = {0} AND plan = 'premium' AND status = 'active'",
-                    userId)
-                .FirstOrDefaultAsync();
-            return result > 0;
-        }
-        catch
-        {
-            // subscriptions table not yet migrated — block access to stay safe
-            return false;
-        }
+        return await db.Subscriptions
+            .AnyAsync(s => s.UserId == userId && s.Plan == "premium" && s.Status == "active");
     }
 }
