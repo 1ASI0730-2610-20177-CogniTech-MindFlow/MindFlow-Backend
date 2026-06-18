@@ -185,21 +185,26 @@ public class GeminiService(
 
     private async Task SaveMetricAsync(string operation, int latencyMs, bool success, int promptLength, int responseLength, string? errorMessage)
     {
+        var truncatedError = errorMessage is { Length: > 500 } ? errorMessage[..500] : errorMessage;
+        AiMetricLog? metric = null;
         try
         {
-            dbContext.AiMetricLogs.Add(new AiMetricLog
+            metric = new AiMetricLog
             {
                 Operation = operation,
                 LatencyMs = latencyMs,
                 Success = success,
                 PromptLength = promptLength,
                 ResponseLength = responseLength,
-                ErrorMessage = errorMessage
-            });
+                ErrorMessage = truncatedError
+            };
+            dbContext.AiMetricLogs.Add(metric);
             await dbContext.SaveChangesAsync();
         }
         catch (Exception ex)
         {
+            if (metric is not null)
+                dbContext.Entry(metric).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
             logger.LogWarning(ex, "Failed to save AI metric log.");
         }
     }
