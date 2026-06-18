@@ -39,7 +39,7 @@ public sealed class SubscriptionsController(ISubscriptionService subscriptionSer
 
     [HttpPost("verify-session")]
     [Authorize]
-    public async Task<IActionResult> VerifySession([FromQuery] string sessionId, CancellationToken ct)
+    public async Task<IActionResult> VerifySession([FromQuery(Name = "session_id")] string sessionId, CancellationToken ct)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
 
