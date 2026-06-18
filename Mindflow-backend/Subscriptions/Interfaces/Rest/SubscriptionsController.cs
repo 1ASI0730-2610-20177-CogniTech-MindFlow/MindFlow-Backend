@@ -54,6 +54,23 @@ public sealed class SubscriptionsController(ISubscriptionService subscriptionSer
         }
     }
 
+    [HttpPost("cancel")]
+    [Authorize]
+    public async Task<IActionResult> Cancel(CancellationToken ct)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        try
+        {
+            await subscriptionService.CancelAsync(userId, ct);
+            return Ok(new { message = "Subscription canceled successfully." });
+        }
+        catch (StripeException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPost("webhook")]
     [AllowAnonymous]
     public async Task<IActionResult> Webhook(CancellationToken ct)

@@ -8,4 +8,5 @@ public interface ISubscriptionService
     Task HandleWebhookAsync(string payload, string stripeSignature, CancellationToken ct = default);
     Task<SubscriptionDto> GetByUserIdAsync(int userId, CancellationToken ct = default);
     Task<SubscriptionDto> VerifySessionAsync(int userId, string sessionId, CancellationToken ct = default);
+    Task CancelAsync(int userId, CancellationToken ct = default);
 }
