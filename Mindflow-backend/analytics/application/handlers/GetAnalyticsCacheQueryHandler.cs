@@ -14,9 +14,14 @@ public class GetAnalyticsCacheQueryHandler(AppDbContext dbContext)
 {
     public async Task<Result<List<AnalyticsCacheDto>>> Handle(GetAnalyticsCacheQuery request, CancellationToken ct)
     {
-        var caches = await dbContext.AnalyticsCaches
+        var query = dbContext.AnalyticsCaches
             .AsNoTracking()
-            .Where(c => c.UserId == request.UserId)
+            .Where(c => c.UserId == request.UserId);
+
+        if (request.WeekStart.HasValue)
+            query = query.Where(c => c.WeekStart == request.WeekStart.Value);
+
+        var caches = await query
             .OrderByDescending(c => c.WeekStart)
             .ToListAsync(ct);
 
