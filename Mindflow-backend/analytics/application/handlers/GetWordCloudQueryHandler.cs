@@ -19,8 +19,11 @@ public class GetWordCloudQueryHandler(AppDbContext dbContext)
             .FirstOrDefaultAsync(w => w.UserId == request.UserId, ct);
 
         if (wordCloud is null)
-            return Result<WordCloudDto>.Failure(
-                 AnalyticsError.WordCloudNotFound, "No word cloud found for the current user."); 
+            return Result<WordCloudDto>.Success(new WordCloudDto
+            {
+                UserId = request.UserId,
+                Words = "[]"
+            });
 
         return Result<WordCloudDto>.Success(new WordCloudDto
         {
