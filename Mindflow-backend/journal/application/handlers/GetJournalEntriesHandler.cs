@@ -30,7 +30,10 @@ public class GetJournalEntriesHandler(AppDbContext dbContext)
             _ => ascending ? query.OrderBy(e => e.CreatedAt) : query.OrderByDescending(e => e.CreatedAt)
         };
 
-        var entries = await query.Take(request.Limit ?? 3).ToListAsync(ct);
+        if (request.Limit.HasValue)
+            query = query.Take(request.Limit.Value);
+
+        var entries = await query.ToListAsync(ct);
 
         return Result<IEnumerable<JournalEntryDto>>.Success(entries.Select(Map));
     }
