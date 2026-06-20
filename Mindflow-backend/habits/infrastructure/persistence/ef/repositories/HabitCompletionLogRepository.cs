@@ -17,6 +17,7 @@ public class HabitCompletionLogRepository : BaseRepository<HabitCompletionLog>, 
     {
         return await Context.Set<HabitCompletionLog>()
             .Where(l => l.HabitId == habitId)
+            .OrderByDescending(l => l.Date)
             .ToListAsync(cancellationToken);
     }
 
@@ -29,6 +30,7 @@ public class HabitCompletionLogRepository : BaseRepository<HabitCompletionLog>, 
 
         return await Context.Set<HabitCompletionLog>()
             .Where(l => habitIds.Contains(l.HabitId))
+            .OrderByDescending(l => l.Date)
             .ToListAsync(cancellationToken);
     }
 }

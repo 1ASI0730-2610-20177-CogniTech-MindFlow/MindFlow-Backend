@@ -51,6 +51,11 @@ public class Habit : IAuditableEntity
         Status = HabitStatus.Pending;
     }
 
+    public void SetStreak(int streak)
+    {
+        Streak = streak;
+    }
+
     public void PauseByAi()
     {
         Status = HabitStatus.PausedByAi;
