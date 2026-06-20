@@ -14,6 +14,14 @@ public class UpdateJournalEntryHandler(
     IUnitOfWork unitOfWork,
     IAnalyticsCacheInvalidator cacheInvalidator) : ICommandHandler<UpdateJournalEntryCommand, Result<JournalEntryDto>>
 {
+    private static readonly string[] PositiveWords =
+        ["feliz", "bien", "genial", "excelente", "alegre", "contento", "motivado", "logré",
+         "happy", "great", "good", "amazing", "wonderful"];
+
+    private static readonly string[] NegativeWords =
+        ["triste", "mal", "terrible", "ansioso", "estresado", "frustrado", "agotado",
+         "sad", "bad", "stressed", "anxious", "exhausted", "frustrated"];
+
     public async Task<Result<JournalEntryDto>> Handle(UpdateJournalEntryCommand request, CancellationToken ct)
     {
         var entry = await repository.FindByIdAsync(request.Id, ct);
@@ -21,15 +29,25 @@ public class UpdateJournalEntryHandler(
             return Result<JournalEntryDto>.Failure(
                  JournalError.JournalEntryNotFound, "Entry not found");
 
+        var sentiment = request.Sentiment;
+        if (string.IsNullOrWhiteSpace(sentiment)
+            || string.Equals(sentiment, "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            var text = $"{request.Content} {request.Title}".ToLowerInvariant();
+            sentiment = PositiveWords.Any(text.Contains) ? "positive"
+                      : NegativeWords.Any(text.Contains) ? "negative"
+                      : "neutral";
+        }
+
         entry.Title = request.Title;
         entry.Content = request.Content;
-        entry.Sentiment = request.Sentiment;
+        entry.Sentiment = sentiment;
         entry.Category = request.Category;
         entry.HasPreview = request.Content.Length > 200; 
 
         repository.Update(entry);
         await unitOfWork.CompleteAsync(ct);
-        await cacheInvalidator.InvalidateAsync(entry.UserId, ct);
+        await cacheInvalidator.InvalidateAsync(entry.UserId, entry.Date, ct);
 
         return Result<JournalEntryDto>.Success(Map(entry));
     }

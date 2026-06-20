@@ -142,7 +142,7 @@ builder.Services.AddScoped<IHabitLogQueryService, HabitLogQueryService>();
 
 builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddHttpClient("Gemini");
+builder.Services.AddHttpClient("Gemini", c => c.Timeout = TimeSpan.FromSeconds(30));
 builder.Services.AddHttpClient("Fcm");
 builder.Services.AddScoped<IAiService, GeminiService>();
 builder.Services.AddScoped<IWellnessService, WellnessService>();

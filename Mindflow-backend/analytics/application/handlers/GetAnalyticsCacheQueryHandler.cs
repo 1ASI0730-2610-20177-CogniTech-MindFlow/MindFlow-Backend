@@ -40,8 +40,8 @@ public class GetAnalyticsCacheQueryHandler(AppDbContext dbContext)
         EndDate = cache.EndDate,
         AiInsight = cache.AiInsight,
         AiInsightLocalizedRaw = cache.AiInsightLocalized,
-        Kpis = cache.Kpis,
-        FluctuationData = cache.FluctuationData,
-        TrendData = cache.TrendData
+        KpisRaw = cache.Kpis,
+        FluctuationDataRaw = cache.FluctuationData,
+        TrendDataRaw = cache.TrendData
     };
 }

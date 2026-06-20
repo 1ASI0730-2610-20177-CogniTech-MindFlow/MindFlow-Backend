@@ -22,7 +22,14 @@ public class UserCommandService(
 {
     public async Task<Result<User>> Handle(SignUpCommand command)
     {
-        if (userRepository.ExistsByEmail(command.Email))
+        if (string.IsNullOrWhiteSpace(command.Email) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(command.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            return Result<User>.Failure(SignUpError.InvalidEmailFormat, "El formato del correo electrónico no es válido.");
+
+        if (string.IsNullOrWhiteSpace(command.Password) || command.Password.Length < 8)
+            return Result<User>.Failure(SignUpError.UnexpectedError, "La contraseña debe tener al menos 8 caracteres.");
+
+        if (await userRepository.ExistsByEmailAsync(command.Email))
             return Result<User>.Failure(SignUpError.EmailAlreadyInUse, "El correo ingresado ya está en uso.");
 
         try
@@ -152,7 +159,15 @@ public class UserCommandService(
         });
         await dbContext.SaveChangesAsync();
 
-        await emailService.SendPasswordResetAsync(user.Email, rawToken);
+        try
+        {
+            await emailService.SendPasswordResetAsync(user.Email, rawToken);
+        }
+        catch
+        {
+            return Result.Failure(SignUpError.UnexpectedError, "No se pudo enviar el correo de recuperación. Intenta de nuevo.");
+        }
+
         return Result.Success();
     }
 

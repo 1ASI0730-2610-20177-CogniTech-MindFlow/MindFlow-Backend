@@ -2,11 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.AiFeedback.Application.Dtos;
 using Mindflow_backend.AiFeedback.Application.Services;
 using Mindflow_backend.AiFeedback.Domain.Model.Entities;
+using Mindflow_backend.Shared.Domain.Repositories;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
 namespace Mindflow_backend.AiFeedback.Infrastructure.Services;
 
-public class AiFeedbackService(AppDbContext db) : IAiFeedbackService
+public class AiFeedbackService(AppDbContext db, IUnitOfWork unitOfWork) : IAiFeedbackService
 {
     private static readonly HashSet<string> ValidContentTypes = ["journal", "habit"];
 
@@ -18,6 +19,17 @@ public class AiFeedbackService(AppDbContext db) : IAiFeedbackService
 
         if (rating is < 1 or > 5)
             throw new ArgumentException("La calificación debe estar entre 1 y 5.");
+
+        var contentExists = contentType switch
+        {
+            "journal" => await db.JournalEntries.AnyAsync(e => e.Id == contentId),
+            "habit" => await db.Set<Mindflow_backend.Habits.Domain.Model.Aggregates.Habit>()
+                .AnyAsync(h => h.Id == contentId),
+            _ => false
+        };
+
+        if (!contentExists)
+            throw new ArgumentException($"No se encontró el contenido con id {contentId} de tipo '{contentType}'.");
 
         var existing = await db.AiFeedbackRatings
             .FirstOrDefaultAsync(f => f.UserId == userId && f.ContentId == contentId && f.ContentType == contentType);
@@ -40,7 +52,7 @@ public class AiFeedbackService(AppDbContext db) : IAiFeedbackService
             db.AiFeedbackRatings.Add(existing);
         }
 
-        await db.SaveChangesAsync();
+        await unitOfWork.CompleteAsync();
         return existing;
     }
 
@@ -54,22 +66,34 @@ public class AiFeedbackService(AppDbContext db) : IAiFeedbackService
 
     public async Task<AiFeedbackSummaryDto> GetSummaryAsync(int userId)
     {
-        var ratings = await db.AiFeedbackRatings
+        var stats = await db.AiFeedbackRatings
             .Where(f => f.UserId == userId)
-            .ToListAsync();
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Average = g.Average(f => (double)f.Rating)
+            })
+            .FirstOrDefaultAsync();
 
-        if (ratings.Count == 0)
+        if (stats is null || stats.Total == 0)
             return new AiFeedbackSummaryDto(0, 0, new Dictionary<int, int>
             {
                 [1] = 0, [2] = 0, [3] = 0, [4] = 0, [5] = 0
             });
 
-        var distribution = Enumerable.Range(1, 5)
-            .ToDictionary(r => r, r => ratings.Count(f => f.Rating == r));
+        var distribution = await db.AiFeedbackRatings
+            .Where(f => f.UserId == userId)
+            .GroupBy(f => f.Rating)
+            .Select(g => new { Rating = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Rating, g => g.Count);
+
+        for (var i = 1; i <= 5; i++)
+            distribution.TryAdd(i, 0);
 
         return new AiFeedbackSummaryDto(
-            ratings.Count,
-            Math.Round(ratings.Average(f => f.Rating), 2),
+            stats.Total,
+            Math.Round(stats.Average, 2),
             distribution);
     }
 }

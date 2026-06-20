@@ -46,9 +46,11 @@ public class FcmNotificationService(
 
         var client = httpClientFactory.CreateClient("Fcm");
         var url = $"https://fcm.googleapis.com/v1/projects/{projectId}/messages:send";
+        var deadTokens = new List<string>();
 
         foreach (var token in tokens)
         {
+            var tokenPreview = token.Length > 10 ? token[..10] : token;
             try
             {
                 var payload = new
@@ -67,12 +69,24 @@ public class FcmNotificationService(
 
                 var response = await client.SendAsync(request, ct);
                 if (!response.IsSuccessStatusCode)
-                    logger.LogWarning("FCM send failed for token {Token}: {Status}", token[..10], response.StatusCode);
+                {
+                    logger.LogWarning("FCM send failed for token {Token}: {Status}", tokenPreview, response.StatusCode);
+                    if ((int)response.StatusCode is 400 or 404)
+                        deadTokens.Add(token);
+                }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "FCM send error for token {Token}.", token[..10]);
+                logger.LogWarning(ex, "FCM send error for token {Token}.", tokenPreview);
             }
+        }
+
+        if (deadTokens.Count > 0)
+        {
+            await dbContext.DeviceTokens
+                .Where(dt => deadTokens.Contains(dt.Token))
+                .ExecuteDeleteAsync(ct);
+            logger.LogInformation("Removed {Count} invalid FCM tokens.", deadTokens.Count);
         }
     }
 

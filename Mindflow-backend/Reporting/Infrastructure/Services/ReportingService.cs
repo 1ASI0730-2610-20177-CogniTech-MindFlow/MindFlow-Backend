@@ -134,6 +134,7 @@ public class ReportingService(AppDbContext db) : IReportingService
         var entries = await db.JournalEntries
             .Where(e => e.UserId == userId)
             .OrderByDescending(e => e.Date)
+            .Take(500)
             .ToListAsync();
 
         using var ms = new MemoryStream();

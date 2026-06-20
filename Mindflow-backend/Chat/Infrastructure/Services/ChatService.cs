@@ -26,14 +26,13 @@ public class ChatService(
         {
             UserId = userId,
             Title = title,
-            Category = category ?? "Personal"
+            Category = string.IsNullOrWhiteSpace(category) ? "Personal" : category
         };
         db.Conversations.Add(conversation);
-        await unitOfWork.CompleteAsync(ct);
 
         var userMessage = new ChatMessage
         {
-            ConversationId = conversation.Id,
+            Conversation = conversation,
             Role = "user",
             Content = content
         };

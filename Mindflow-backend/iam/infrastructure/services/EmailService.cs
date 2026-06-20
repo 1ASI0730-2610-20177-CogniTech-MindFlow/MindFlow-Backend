@@ -4,7 +4,7 @@ using Mindflow_backend.iam.application.services;
 
 namespace Mindflow_backend.iam.infrastructure.services;
 
-public class EmailService(IConfiguration configuration) : IEmailService
+public class EmailService(IConfiguration configuration, ILogger<EmailService> logger) : IEmailService
 {
     public async Task SendPasswordResetAsync(string toEmail, string resetToken)
     {
@@ -32,12 +32,20 @@ public class EmailService(IConfiguration configuration) : IEmailService
         };
         message.To.Add(toEmail);
 
-        using var client = new SmtpClient(smtp["Host"], int.Parse(smtp["Port"]!))
+        try
         {
-            EnableSsl = true,
-            Credentials = new NetworkCredential(smtp["Username"], smtp["Password"])
-        };
+            using var client = new SmtpClient(smtp["Host"], int.Parse(smtp["Port"] ?? "587"))
+            {
+                EnableSsl = true,
+                Credentials = new NetworkCredential(smtp["Username"], smtp["Password"])
+            };
 
-        await client.SendMailAsync(message);
+            await client.SendMailAsync(message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send password reset email to {Email}.", toEmail);
+            throw;
+        }
     }
 }

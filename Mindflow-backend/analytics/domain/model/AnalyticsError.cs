@@ -6,6 +6,5 @@ public enum AnalyticsError
     AnalyticsCacheCreationFailed,
     AnalyticsCacheUpdateFailed,
     WordCloudNotFound,
-    WordCloudCreationFailed,
-    UserIdMismatch
+    WordCloudCreationFailed
 }

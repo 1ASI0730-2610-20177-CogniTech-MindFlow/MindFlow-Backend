@@ -47,7 +47,7 @@ public class CreateJournalEntryHandler(
 
         await repository.AddAsync(entry, ct);
         await unitOfWork.CompleteAsync(ct);
-        await cacheInvalidator.InvalidateAsync(request.UserId, ct);
+        await cacheInvalidator.InvalidateAsync(request.UserId, request.Date, ct);
 
         return Result<JournalEntryDto>.Success(Map(entry));
     }

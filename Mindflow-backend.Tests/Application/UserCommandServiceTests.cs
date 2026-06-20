@@ -24,10 +24,10 @@ public class UserCommandServiceTests
     [Fact]
     public async Task SignUp_WithNewEmail_ReturnsSuccess()
     {
-        _userRepo.Setup(r => r.ExistsByEmail("new@mail.com")).Returns(false);
+        _userRepo.Setup(r => r.ExistsByEmailAsync("new@mail.com")).ReturnsAsync(false);
         var service = CreateService();
 
-        var result = await service.Handle(new SignUpCommand("new@mail.com", "Pass123"));
+        var result = await service.Handle(new SignUpCommand("new@mail.com", "Pass1234"));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("new@mail.com", result.Value!.Email);
@@ -38,10 +38,10 @@ public class UserCommandServiceTests
     [Fact]
     public async Task SignUp_WithExistingEmail_ReturnsFailure()
     {
-        _userRepo.Setup(r => r.ExistsByEmail("exists@mail.com")).Returns(true);
+        _userRepo.Setup(r => r.ExistsByEmailAsync("exists@mail.com")).ReturnsAsync(true);
         var service = CreateService();
 
-        var result = await service.Handle(new SignUpCommand("exists@mail.com", "Pass123"));
+        var result = await service.Handle(new SignUpCommand("exists@mail.com", "Pass1234"));
 
         Assert.True(result.IsFailure);
         Assert.Contains("ya está en uso", result.Message);
