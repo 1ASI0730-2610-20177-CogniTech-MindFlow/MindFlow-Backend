@@ -12,11 +12,16 @@ public class ChatController(IChatService chatService) : ControllerBase
 {
     private int CurrentUserId => int.Parse(User.FindFirst("user_id")!.Value);
 
+    private const int MaxContentLength = 5000;
+
     [HttpPost("conversations")]
     public async Task<IActionResult> CreateConversation([FromBody] CreateConversationRequest request, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(request.Content))
             return BadRequest(new { message = "El contenido del mensaje es obligatorio." });
+
+        if (request.Content.Length > MaxContentLength)
+            return BadRequest(new { message = $"El mensaje no puede superar los {MaxContentLength} caracteres." });
 
         var result = await chatService.CreateConversationAsync(
             CurrentUserId, request.Content.Trim(), request.Category?.Trim(), ct);
@@ -50,6 +55,9 @@ public class ChatController(IChatService chatService) : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Content))
             return BadRequest(new { message = "El contenido del mensaje es obligatorio." });
+
+        if (request.Content.Length > MaxContentLength)
+            return BadRequest(new { message = $"El mensaje no puede superar los {MaxContentLength} caracteres." });
 
         try
         {

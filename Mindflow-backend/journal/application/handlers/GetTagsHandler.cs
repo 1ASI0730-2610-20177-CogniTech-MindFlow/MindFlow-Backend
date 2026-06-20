@@ -1,27 +1,23 @@
 using Cortex.Mediator.Queries;
+using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Application.Queries;
-using Mindflow_backend.Journal.Domain.Entities;
 using Mindflow_backend.Shared.Application.Model;
-using Mindflow_backend.Shared.Domain.Repositories;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
 namespace Mindflow_backend.Journal.Application.Handlers;
 
-public class GetTagsHandler(IBaseRepository<Tag> repository)
+public class GetTagsHandler(AppDbContext dbContext)
     : IQueryHandler<GetTagsQuery, Result<IEnumerable<TagDto>>>
 {
     public async Task<Result<IEnumerable<TagDto>>> Handle(GetTagsQuery request, CancellationToken ct)
     {
-        var tags = await repository.ListAsync(ct);
-        var filtered = tags.Where(t => t.UserId == request.UserId).ToList();
+        var tags = await dbContext.Tags
+            .AsNoTracking()
+            .Where(t => t.UserId == request.UserId)
+            .Select(t => new TagDto { Id = t.Id, UserId = t.UserId, Name = t.Name })
+            .ToListAsync(ct);
 
-        return Result<IEnumerable<TagDto>>.Success(filtered.Select(Map));
+        return Result<IEnumerable<TagDto>>.Success(tags);
     }
-
-    private static TagDto Map(Tag t) => new()
-    {
-        Id = t.Id,
-        UserId = t.UserId,
-        Name = t.Name
-    };
 }

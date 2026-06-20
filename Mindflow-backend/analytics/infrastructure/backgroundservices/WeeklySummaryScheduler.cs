@@ -72,11 +72,5 @@ public class WeeklySummaryScheduler(
         return nextSunday - now;
     }
 
-    private static DateOnly GetCurrentWeekStart()
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var diff = (int)today.DayOfWeek - (int)DayOfWeek.Monday;
-        if (diff < 0) diff += 7;
-        return today.AddDays(-diff);
-    }
+    private static DateOnly GetCurrentWeekStart() => Shared.Domain.DateHelper.GetCurrentWeekStart();
 }

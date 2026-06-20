@@ -243,8 +243,7 @@ public class StripeSubscriptionService(
         var sub = await dbContext.Subscriptions
             .FirstOrDefaultAsync(s => s.StripeCustomerId == customerId, ct);
         if (sub is null) return;
-        sub.Plan = "premium";
-        sub.Status = "active";
+        sub.Activate(customerId, sub.StripeSubscriptionId ?? string.Empty);
         await unitOfWork.CompleteAsync(ct);
         logger.LogInformation("Subscription reactivated via invoice.payment_succeeded for customer {CustomerId}.", customerId);
     }

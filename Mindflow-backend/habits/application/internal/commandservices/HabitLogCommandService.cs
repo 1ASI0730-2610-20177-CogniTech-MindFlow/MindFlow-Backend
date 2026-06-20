@@ -26,6 +26,9 @@ public class HabitLogCommandService : IHabitLogCommandService
 
     public async Task<Result<HabitCompletionLog>> Handle(CreateHabitLogCommand command, CancellationToken cancellationToken = default)
     {
+        if (command.Date.Date > DateTime.UtcNow.Date)
+            return Result<HabitCompletionLog>.Failure(HabitsError.HabitLogCreationFailed, "No se pueden registrar logs con fecha futura.");
+
         try
         {
             var log = new HabitCompletionLog(command.HabitId, command.HabitName, command.Category, command.Date, command.CompletedAt);
@@ -123,10 +126,10 @@ public class HabitLogCommandService : IHabitLogCommandService
 
     private static int ComputeDailyStreak(List<DateTime> dates, DateTime today)
     {
-        var expected = dates[0] == today ? today : today.AddDays(-1);
         if (dates[0] != today && dates[0] != today.AddDays(-1))
             return 0;
 
+        var expected = dates[0];
         var streak = 0;
         foreach (var date in dates)
         {

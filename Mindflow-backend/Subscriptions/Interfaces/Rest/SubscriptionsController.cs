@@ -73,6 +73,7 @@ public sealed class SubscriptionsController(ISubscriptionService subscriptionSer
 
     [HttpPost("webhook")]
     [AllowAnonymous]
+    [RequestSizeLimit(65_536)]
     public async Task<IActionResult> Webhook(CancellationToken ct)
     {
         var payload   = await new StreamReader(Request.Body).ReadToEndAsync(ct);

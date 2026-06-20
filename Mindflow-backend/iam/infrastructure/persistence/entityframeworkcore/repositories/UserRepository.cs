@@ -15,6 +15,6 @@ public class UserRepository(AppDbContext context) : BaseRepository<User>(context
     public async Task<User?> FindByGoogleIdAsync(string googleId)
         => await Context.Set<User>().FirstOrDefaultAsync(u => u.GoogleId == googleId);
 
-    public bool ExistsByEmail(string email)
-        => Context.Set<User>().Any(u => u.Email == email);
+    public async Task<bool> ExistsByEmailAsync(string email)
+        => await Context.Set<User>().AnyAsync(u => u.Email == email);
 }

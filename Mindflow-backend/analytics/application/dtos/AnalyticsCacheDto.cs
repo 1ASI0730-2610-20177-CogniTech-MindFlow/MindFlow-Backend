@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Mindflow_backend.Analytics.Application.Dtos;
@@ -22,7 +23,21 @@ public class AnalyticsCacheDto
     [JsonIgnore]
     public string? AiInsightLocalizedRaw { get; set; }
 
-    public string? Kpis { get; set; }
-    public string? FluctuationData { get; set; }
-    public string? TrendData { get; set; }
+    [JsonIgnore]
+    public string? KpisRaw { get; set; }
+
+    public object? Kpis => DeserializeJson(KpisRaw);
+
+    [JsonIgnore]
+    public string? FluctuationDataRaw { get; set; }
+
+    public object? FluctuationData => DeserializeJson(FluctuationDataRaw);
+
+    [JsonIgnore]
+    public string? TrendDataRaw { get; set; }
+
+    public object? TrendData => DeserializeJson(TrendDataRaw);
+
+    private static object? DeserializeJson(string? json) =>
+        string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<JsonElement>(json);
 }

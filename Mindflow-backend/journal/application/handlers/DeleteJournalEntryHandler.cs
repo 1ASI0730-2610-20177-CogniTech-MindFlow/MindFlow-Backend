@@ -23,7 +23,7 @@ public class DeleteJournalEntryHandler(
         entry.DeletedAt = DateTimeOffset.UtcNow;
         repository.Update(entry);
         await unitOfWork.CompleteAsync(ct);
-        await cacheInvalidator.InvalidateAsync(entry.UserId, ct);
+        await cacheInvalidator.InvalidateAsync(entry.UserId, entry.Date, ct);
 
         return Result.Success();
     }

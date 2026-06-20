@@ -146,7 +146,10 @@ public class GeminiService(
             using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
             var client = httpClientFactory.CreateClient("Gemini");
-            var response = await client.PostAsync($"{ApiBase}?key={apiKey}", httpContent);
+            using var request = new HttpRequestMessage(HttpMethod.Post, ApiBase);
+            request.Headers.Add("x-goog-api-key", apiKey);
+            request.Content = httpContent;
+            var response = await client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {

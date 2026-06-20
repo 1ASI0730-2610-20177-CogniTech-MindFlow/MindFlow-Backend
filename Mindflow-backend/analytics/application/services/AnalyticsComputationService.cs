@@ -67,7 +67,17 @@ public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiSe
             dbContext.AnalyticsCaches.Add(existing);
         }
 
-        await dbContext.SaveChangesAsync();
+        try
+        {
+            await dbContext.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            dbContext.ChangeTracker.Clear();
+            existing = await dbContext.AnalyticsCaches
+                .FirstAsync(c => c.UserId == userId && c.WeekStart == weekStart);
+        }
+
         return existing;
     }
 
@@ -321,30 +331,29 @@ public class AnalyticsComputationService(AppDbContext dbContext, IAiService aiSe
         List<JournalEntry> entries, int score)
     {
         var count = entries.Count;
+
+        if (count == 0)
+        {
+            return (
+                "No entries recorded this week. Start writing to track your emotional well-being.",
+                "No registraste entradas esta semana. Empieza a escribir para monitorear tu bienestar emocional."
+            );
+        }
+
         var mood = score >= 70 ? "positive" : score >= 40 ? "neutral" : "low";
 
         string en = mood switch
         {
             "positive" => $"Great week! You recorded {count} entries with a generally positive mood. Keep up the good habits.",
             "low" => $"This week you wrote {count} entries. We noticed some challenging emotions. Consider taking time for self-care.",
-            _ => count == 0
-                ? "No entries recorded this week. Start writing to track your emotional well-being."
-                : $"You recorded {count} entries this week with a balanced mood. Consistent reflection builds emotional awareness."
+            _ => $"You recorded {count} entries this week with a balanced mood. Consistent reflection builds emotional awareness."
         };
 
-        string es;
-        if (count > 0)
-        {
-            var contents = entries.Select(e => e.Content);
-            var geminiResponse = await aiService.GenerateWeeklySummaryAsync(contents, score);
-            es = string.IsNullOrEmpty(geminiResponse)
-                ? FallbackSpanish(count, mood)
-                : geminiResponse;
-        }
-        else
-        {
-            es = "No registraste entradas esta semana. Empieza a escribir para monitorear tu bienestar emocional.";
-        }
+        var contents = entries.Select(e => e.Content);
+        var geminiResponse = await aiService.GenerateWeeklySummaryAsync(contents, score);
+        var es = string.IsNullOrEmpty(geminiResponse)
+            ? FallbackSpanish(count, mood)
+            : geminiResponse;
 
         return (en, es);
     }

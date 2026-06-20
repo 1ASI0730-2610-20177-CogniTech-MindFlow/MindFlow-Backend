@@ -40,9 +40,9 @@ public sealed class AnalyticsController(
                     cache.StartDate,
                     cache.EndDate,
                     AiInsightLocalized = new { en = cache.AiInsight, es = cache.AiInsightLocalized },
-                    Kpis = cache.Kpis,
-                    FluctuationData = cache.FluctuationData,
-                    TrendData = cache.TrendData,
+                    Kpis = Deserialize<List<KpiItemDto>>(cache.Kpis),
+                    FluctuationData = Deserialize<ChartDataDto>(cache.FluctuationData),
+                    TrendData = Deserialize<ChartDataDto>(cache.TrendData),
                     cache.CreatedAt,
                     cache.UpdatedAt
                 }
@@ -148,13 +148,7 @@ public sealed class AnalyticsController(
         });
     }
 
-    private static DateOnly GetCurrentWeekStart()
-    {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var diff = (int)today.DayOfWeek - (int)DayOfWeek.Monday;
-        if (diff < 0) diff += 7;
-        return today.AddDays(-diff);
-    }
+    private static DateOnly GetCurrentWeekStart() => Shared.Domain.DateHelper.GetCurrentWeekStart();
 
     private static T? Deserialize<T>(string? json) where T : class =>
         string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<T>(json);

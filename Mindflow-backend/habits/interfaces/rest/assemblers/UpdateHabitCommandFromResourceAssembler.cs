@@ -11,10 +11,6 @@ public static class UpdateHabitCommandFromResourceAssembler
         if (!Enum.TryParse<HabitFrequency>(resource.Frequency, ignoreCase: true, out var frequency))
             throw new ArgumentException($"Invalid frequency: {resource.Frequency}");
 
-        var statusNormalized = resource.Status?.Replace("_", "") ?? "Pending";
-        if (!Enum.TryParse<HabitStatus>(statusNormalized, ignoreCase: true, out var status))
-            throw new ArgumentException($"Invalid status: {resource.Status}");
-
-        return new UpdateHabitCommand(id, userId, resource.Name, resource.Category, frequency, resource.Streak, status, resource.PausedByAi);
+        return new UpdateHabitCommand(id, userId, resource.Name, resource.Category, frequency);
     }
 }

@@ -1,17 +1,19 @@
 using Cortex.Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Journal.Application.Commands;
 using Mindflow_backend.Journal.Application.Dtos;
 using Mindflow_backend.Journal.Application.Queries;
 using Mindflow_backend.Journal.Application.Services;
+using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
 namespace Mindflow_backend.Journal.Interfaces.Controllers;
 
 [ApiController]
 [Route("journal")]
 [Authorize]
-public sealed class JournalController(IMediator mediator, IFileStorageService fileStorage) : ControllerBase
+public sealed class JournalController(IMediator mediator, IFileStorageService fileStorage, AppDbContext dbContext) : ControllerBase
 {
     [HttpGet("entries")]
     public async Task<IActionResult> GetEntries(
@@ -146,16 +148,17 @@ public sealed class JournalController(IMediator mediator, IFileStorageService fi
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
 
-        var tagsQuery = new GetEntryTagsQuery { EntryId = null };
-        var tagsResult = await mediator.QueryAsync(tagsQuery);
-        var tag = tagsResult.Value?.FirstOrDefault(t => t.Id == id);
-        if (tag is not null)
-        {
-            var entryQuery = new GetJournalEntryByIdQuery { Id = tag.EntryId };
-            var entryResult = await mediator.QueryAsync(entryQuery);
-            if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
-                return NotFound();
-        }
+        var entryTag = await dbContext.EntryTags
+            .AsNoTracking()
+            .FirstOrDefaultAsync(et => et.Id == id);
+
+        if (entryTag is null)
+            return NotFound();
+
+        var entryQuery = new GetJournalEntryByIdQuery { Id = entryTag.EntryId };
+        var entryResult = await mediator.QueryAsync(entryQuery);
+        if (!entryResult.IsSuccess || entryResult.Value!.UserId != userId)
+            return NotFound();
 
         var command = new DeleteEntryTagCommand { Id = id };
         var result = await mediator.SendAsync(command);

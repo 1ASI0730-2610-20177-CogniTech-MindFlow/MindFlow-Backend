@@ -47,12 +47,15 @@ public sealed class NotificationsController(
     }
 
     [HttpDelete("unregister-device")]
-    public async Task<IActionResult> UnregisterDevice([FromBody] string token, CancellationToken ct)
+    public async Task<IActionResult> UnregisterDevice([FromBody] UnregisterDeviceRequest request, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(request.Token))
+            return BadRequest(new { error = "El token del dispositivo es requerido." });
+
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
 
         var existing = await dbContext.DeviceTokens
-            .FirstOrDefaultAsync(dt => dt.Token == token && dt.UserId == userId, ct);
+            .FirstOrDefaultAsync(dt => dt.Token == request.Token && dt.UserId == userId, ct);
 
         if (existing is null) return NotFound();
 

@@ -14,6 +14,9 @@ public class AiFeedbackController(IAiFeedbackService feedbackService) : Controll
     [HttpPost]
     public async Task<IActionResult> SubmitRating([FromBody] SubmitRatingRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.ContentType))
+            return BadRequest(new { error = "El tipo de contenido es obligatorio." });
+
         try
         {
             var rating = await feedbackService.SubmitRatingAsync(
