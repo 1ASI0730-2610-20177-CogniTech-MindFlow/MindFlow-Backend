@@ -36,7 +36,7 @@ public class GetAnalyticsCacheByWeekQueryHandler(AppDbContext dbContext)
         StartDate = cache.StartDate,
         EndDate = cache.EndDate,
         AiInsight = cache.AiInsight,
-        AiInsightLocalized = cache.AiInsightLocalized,
+        AiInsightLocalizedRaw = cache.AiInsightLocalized,
         Kpis = cache.Kpis,
         FluctuationData = cache.FluctuationData,
         TrendData = cache.TrendData

@@ -92,6 +92,12 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
         builder.Entity<EntryTag>(entity =>
         {
             entity.HasIndex(et => new { et.EntryId, et.TagId }).IsUnique();
+            entity.HasQueryFilter(et => et.Entry.DeletedAt == null);
+        });
+
+        builder.Entity<Media>(entity =>
+        {
+            entity.HasQueryFilter(m => m.Entry.DeletedAt == null);
         });
 
         builder.Entity<PasswordResetToken>(entity =>

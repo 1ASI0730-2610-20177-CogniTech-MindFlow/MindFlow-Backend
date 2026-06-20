@@ -28,6 +28,8 @@ public class UserCommandService(
         try
         {
             var user = new User(command.Email, command.Password);
+            if (!string.IsNullOrWhiteSpace(command.Name))
+                user.UpdateProfile(command.Name, null);
             await userRepository.AddAsync(user);
             await unitOfWork.CompleteAsync();
             return Result<User>.Success(user);
