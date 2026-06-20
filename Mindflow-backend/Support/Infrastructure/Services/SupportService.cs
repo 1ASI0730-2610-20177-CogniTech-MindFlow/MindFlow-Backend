@@ -24,7 +24,7 @@ public class SupportService(AppDbContext db, IConfiguration configuration, ILogg
         db.SupportTickets.Add(ticket);
         await db.SaveChangesAsync();
 
-        await SendConfirmationEmailAsync(userEmail, ticket.Id, subject);
+        _ = SendConfirmationEmailAsync(userEmail, ticket.Id, subject);
 
         return ticket;
     }
