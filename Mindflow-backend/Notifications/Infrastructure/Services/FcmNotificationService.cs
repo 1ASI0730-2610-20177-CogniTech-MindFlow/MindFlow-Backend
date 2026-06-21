@@ -3,6 +3,7 @@ using System.Text.Json;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.Notifications.Application.Services;
+using Mindflow_backend.Notifications.Domain.Model.Entities;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Configuration;
 
 namespace Mindflow_backend.Notifications.Infrastructure.Services;
@@ -17,6 +18,16 @@ public class FcmNotificationService(
 
     public async Task SendToAllAsync(string title, string body, CancellationToken ct = default)
     {
+        var userIds = await dbContext.DeviceTokens
+            .Select(dt => dt.UserId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        foreach (var uid in userIds)
+            dbContext.Notifications.Add(new Notification { UserId = uid, Title = title, Body = body });
+
+        await dbContext.SaveChangesAsync(ct);
+
         var tokens = await dbContext.DeviceTokens
             .AsNoTracking()
             .Select(dt => dt.Token)
@@ -27,6 +38,9 @@ public class FcmNotificationService(
 
     public async Task SendToUserAsync(int userId, string title, string body, CancellationToken ct = default)
     {
+        dbContext.Notifications.Add(new Notification { UserId = userId, Title = title, Body = body });
+        await dbContext.SaveChangesAsync(ct);
+
         var tokens = await dbContext.DeviceTokens
             .AsNoTracking()
             .Where(dt => dt.UserId == userId)

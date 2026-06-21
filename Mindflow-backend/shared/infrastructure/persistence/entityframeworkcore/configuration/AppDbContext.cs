@@ -40,6 +40,7 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
     public DbSet<CachedHabitSuggestion> CachedHabitSuggestions => Set<CachedHabitSuggestion>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -186,6 +187,16 @@ public class AppDbContext(DbContextOptions options, AesEncryptionService encrypt
             entity.Property(m => m.Content).IsRequired().HasColumnType("LONGTEXT")
                   .HasConversion(encryptedConverter);
             entity.HasIndex(m => m.ConversationId);
+        });
+
+        builder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(n => n.Id);
+            entity.Property(n => n.Title).IsRequired().HasMaxLength(255);
+            entity.Property(n => n.Body).IsRequired().HasMaxLength(1000);
+            entity.Property(n => n.IsRead).HasDefaultValue(false);
+            entity.HasIndex(n => n.UserId);
+            entity.HasIndex(n => new { n.UserId, n.IsRead });
         });
 
         builder.UseSnakeCaseNamingConvention();
