@@ -15,6 +15,45 @@ public sealed class NotificationsController(
     AppDbContext dbContext,
     IUnitOfWork unitOfWork) : ControllerBase
 {
+    [HttpGet]
+    public async Task<IActionResult> GetNotifications(CancellationToken ct)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        var notifications = await dbContext.Notifications
+            .AsNoTracking()
+            .Where(n => n.UserId == userId)
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(50)
+            .Select(n => new
+            {
+                n.Id,
+                n.Title,
+                n.Body,
+                n.IsRead,
+                n.CreatedAt
+            })
+            .ToListAsync(ct);
+
+        return Ok(notifications);
+    }
+
+    [HttpPatch("{id}/read")]
+    public async Task<IActionResult> MarkAsRead(int id, CancellationToken ct)
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+
+        var notification = await dbContext.Notifications
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId, ct);
+
+        if (notification is null)
+            return NotFound();
+
+        notification.IsRead = true;
+        await unitOfWork.CompleteAsync(ct);
+        return Ok(new { message = "Notificación marcada como leída." });
+    }
+
     [HttpPost("register-device")]
     public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceRequest request, CancellationToken ct)
     {
