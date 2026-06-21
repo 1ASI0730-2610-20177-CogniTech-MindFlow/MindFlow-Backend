@@ -38,7 +38,12 @@ public class LocalFileStorageService(IWebHostEnvironment env, IHttpContextAccess
         };
 
         var req = http.HttpContext!.Request;
-        var url = $"{req.Scheme}://{req.Host}/uploads/{userId}/{fileName}";
+        var scheme = req.Headers.ContainsKey("X-Forwarded-Proto")
+            ? req.Headers["X-Forwarded-Proto"].ToString()
+            : req.Scheme;
+        if (scheme != "https" && !req.Host.Host.Contains("localhost"))
+            scheme = "https";
+        var url = $"{scheme}://{req.Host}/uploads/{userId}/{fileName}";
 
         return (url, type);
     }

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mindflow_backend.Support.Application.Services;
+using Mindflow_backend.Support.Domain.Model.Entities;
 
 namespace Mindflow_backend.Support.Interfaces.Rest;
 
@@ -22,11 +23,19 @@ public class SupportController(ISupportService supportService) : ControllerBase
         if (request.Subject.Length > 255)
             return BadRequest(new { message = "El asunto no puede superar los 255 caracteres." });
 
-        var ticket = await supportService.CreateTicketAsync(
-            CurrentUserId,
-            CurrentUserEmail,
-            request.Subject.Trim(),
-            request.Message.Trim());
+        SupportTicket ticket;
+        try
+        {
+            ticket = await supportService.CreateTicketAsync(
+                CurrentUserId,
+                CurrentUserEmail,
+                request.Subject.Trim(),
+                request.Message.Trim());
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(429, new { message = ex.Message });
+        }
 
         return StatusCode(201, new
         {

@@ -12,6 +12,13 @@ public class SupportService(AppDbContext db, IConfiguration configuration, ILogg
 {
     public async Task<SupportTicket> CreateTicketAsync(int userId, string userEmail, string subject, string message)
     {
+        var recent = await db.SupportTickets
+            .AnyAsync(t => t.UserId == userId && t.Subject == subject
+                && t.CreatedAt > DateTimeOffset.UtcNow.AddMinutes(-1));
+
+        if (recent)
+            throw new InvalidOperationException("Ya enviaste un ticket con este asunto. Espera un momento antes de intentar de nuevo.");
+
         var ticket = new SupportTicket
         {
             UserId = userId,
