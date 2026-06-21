@@ -105,6 +105,25 @@ public class UserCommandService(
         await dbContext.AnalyticsCaches.Where(a => a.UserId == command.UserId).ExecuteDeleteAsync();
         await dbContext.WordClouds.Where(w => w.UserId == command.UserId).ExecuteDeleteAsync();
 
+        var conversationIds = await dbContext.Conversations
+            .Where(c => c.UserId == command.UserId)
+            .Select(c => c.Id)
+            .ToListAsync();
+        if (conversationIds.Count > 0)
+        {
+            await dbContext.ChatMessages.Where(m => conversationIds.Contains(m.ConversationId)).ExecuteDeleteAsync();
+            await dbContext.Conversations.Where(c => c.UserId == command.UserId).ExecuteDeleteAsync();
+        }
+
+        await dbContext.SupportTickets.Where(t => t.UserId == command.UserId).ExecuteDeleteAsync();
+        await dbContext.Subscriptions.Where(s => s.UserId == command.UserId).ExecuteDeleteAsync();
+        await dbContext.DeviceTokens.Where(dt => dt.UserId == command.UserId).ExecuteDeleteAsync();
+        await dbContext.Notifications.Where(n => n.UserId == command.UserId).ExecuteDeleteAsync();
+        await dbContext.AiFeedbackRatings.Where(f => f.UserId == command.UserId).ExecuteDeleteAsync();
+        await dbContext.CachedHabitSuggestions.Where(c => c.UserId == command.UserId).ExecuteDeleteAsync();
+        await dbContext.PasswordResetTokens.Where(t => t.UserId == command.UserId).ExecuteDeleteAsync();
+        await dbContext.Tags.Where(t => t.UserId == command.UserId).ExecuteDeleteAsync();
+
         userRepository.Remove(user);
         await unitOfWork.CompleteAsync();
         return Result.Success();
