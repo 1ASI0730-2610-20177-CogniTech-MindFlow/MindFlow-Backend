@@ -68,6 +68,19 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
         return Ok(new { message = "Contraseña actualizada correctamente." });
     }
 
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userId = int.Parse(User.FindFirst("user_id")!.Value);
+        var result = await userCommandService.GetProfileAsync(userId);
+
+        if (result.IsFailure)
+            return NotFound(new { error = result.Message });
+
+        return Ok(UserResourceFromEntityAssembler.ToResourceFromEntity(result.Value!));
+    }
+
     [HttpPut("profile")]
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileResource resource)

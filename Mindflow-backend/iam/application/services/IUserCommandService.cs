@@ -17,4 +17,5 @@ public interface IUserCommandService
     Task<Result<bool>> Handle(VerifyPinCommand command);
     Task<Result> Handle(RemovePinCommand command);
     Task<bool> HasPinAsync(int userId);
+    Task<Result<User>> GetProfileAsync(int userId);
 }

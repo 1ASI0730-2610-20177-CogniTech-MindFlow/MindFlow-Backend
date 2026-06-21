@@ -235,4 +235,12 @@ public class UserCommandService(
         var user = await userRepository.FindByIdAsync(userId);
         return user?.HasPin ?? false;
     }
+
+    public async Task<Result<User>> GetProfileAsync(int userId)
+    {
+        var user = await userRepository.FindByIdAsync(userId);
+        return user is null
+            ? Result<User>.Failure(SignUpError.UnexpectedError, "Usuario no encontrado.")
+            : Result<User>.Success(user);
+    }
 }
