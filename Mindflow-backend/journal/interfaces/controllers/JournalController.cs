@@ -124,7 +124,7 @@ public sealed class JournalController(IMediator mediator, IFileStorageService fi
                 return NotFound();
         }
 
-        var query = new GetEntryTagsQuery { EntryId = entryId };
+        var query = new GetEntryTagsQuery { UserId = userId, EntryId = entryId };
         var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }
@@ -178,7 +178,7 @@ public sealed class JournalController(IMediator mediator, IFileStorageService fi
                 return NotFound();
         }
 
-        var query = new GetMediaQuery { EntryId = entryId };
+        var query = new GetMediaQuery { UserId = userId, EntryId = entryId };
         var result = await mediator.QueryAsync(query);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Message);
     }

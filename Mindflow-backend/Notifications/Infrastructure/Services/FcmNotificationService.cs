@@ -111,7 +111,7 @@ public class FcmNotificationService(
         var jsonContent = configuration["Firebase:ServiceAccountJson"];
         if (!string.IsNullOrWhiteSpace(jsonContent))
         {
-            try { credential = GoogleCredential.FromJson(jsonContent).CreateScoped(FcmScope); }
+            try { credential = CredentialFactory.FromJson<ServiceAccountCredential>(jsonContent).ToGoogleCredential().CreateScoped(FcmScope); }
             catch (Exception ex) { logger.LogWarning(ex, "Failed to load Firebase credential from JSON env var."); }
         }
 
@@ -123,7 +123,7 @@ public class FcmNotificationService(
                 logger.LogDebug("Firebase service account not configured — push notifications disabled.");
                 return null;
             }
-            try { credential = GoogleCredential.FromFile(path).CreateScoped(FcmScope); }
+            try { credential = CredentialFactory.FromFile<ServiceAccountCredential>(path).ToGoogleCredential().CreateScoped(FcmScope); }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed to load Firebase credential from file.");

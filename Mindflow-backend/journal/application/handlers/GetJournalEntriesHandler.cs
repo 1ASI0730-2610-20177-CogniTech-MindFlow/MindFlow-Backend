@@ -19,9 +19,6 @@ public class GetJournalEntriesHandler(AppDbContext dbContext)
             .Include(e => e.EntryTags).ThenInclude(et => et.Tag)
             .Include(e => e.Media);
 
-        if (!string.IsNullOrWhiteSpace(request.Q))
-            query = query.Where(e => e.Title.Contains(request.Q) || e.Content.Contains(request.Q));
-
         bool ascending = request.Order?.ToLower() == "asc";
 
         query = (request.Sort?.ToLower()) switch
@@ -30,10 +27,25 @@ public class GetJournalEntriesHandler(AppDbContext dbContext)
             _ => ascending ? query.OrderBy(e => e.CreatedAt) : query.OrderByDescending(e => e.CreatedAt)
         };
 
-        if (request.Limit.HasValue)
+        // Content is encrypted at rest, so text search must happen in memory after decryption
+        var hasSearch = !string.IsNullOrWhiteSpace(request.Q);
+
+        if (!hasSearch && request.Limit.HasValue)
             query = query.Take(request.Limit.Value);
 
         var entries = await query.ToListAsync(ct);
+
+        if (hasSearch)
+        {
+            IEnumerable<JournalEntry> filtered = entries.Where(e =>
+                e.Title.Contains(request.Q!, StringComparison.OrdinalIgnoreCase) ||
+                e.Content.Contains(request.Q!, StringComparison.OrdinalIgnoreCase));
+
+            if (request.Limit.HasValue)
+                filtered = filtered.Take(request.Limit.Value);
+
+            entries = filtered.ToList();
+        }
 
         return Result<IEnumerable<JournalEntryDto>>.Success(entries.Select(Map));
     }

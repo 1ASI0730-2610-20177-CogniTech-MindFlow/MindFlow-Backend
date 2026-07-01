@@ -14,7 +14,6 @@ using Mindflow_backend.Subscriptions.Application.Services;
 using Mindflow_backend.Subscriptions.Infrastructure.Services;
 using Mindflow_backend.Chat.Application.Services;
 using Mindflow_backend.Chat.Infrastructure.Services;
-using Mindflow_backend.Analytics.Application.Services;
 using Mindflow_backend.Analytics.Infrastructure.Services;
 using Mindflow_backend.Notifications.Application.Services;
 using Mindflow_backend.Analytics.Infrastructure.BackgroundServices;
@@ -44,6 +43,8 @@ using Mindflow_backend.AiFeedback.Application.Services;
 using Mindflow_backend.AiFeedback.Infrastructure.Services;
 using Mindflow_backend.Support.Infrastructure.Services;
 using Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore.Encryption;
+using Mindflow_backend.Shared.Infrastructure.Pipeline.Middleware.Extensions;
+using System.Security.Claims;
 using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = LicenseType.Community;
@@ -66,9 +67,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontendPolicy", policy =>
     {
-        var origins = builder.Configuration["FrontendUrl"]?
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            ?? ["http://localhost:5173"];
+        var frontendUrl = builder.Configuration["FrontendUrl"];
+        var origins = string.IsNullOrWhiteSpace(frontendUrl)
+            ? new[] { "http://localhost:5173" }
+            : frontendUrl.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         policy.WithOrigins(origins)
               .AllowAnyMethod()
@@ -113,14 +115,32 @@ builder.Services.AddLocalization();
 
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("fixed", o =>
-    {
-        o.PermitLimit = 100;
-        o.Window = TimeSpan.FromMinutes(1);
-        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        o.QueueLimit = 5;
-    });
-    options.RejectionStatusCode = 429;
+    // Global limit partitioned per authenticated user (or client IP for anonymous requests)
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirstValue("user_id")
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 5
+            }));
+
+    // Stricter limit for credential-guessing surfaces (sign-in, password reset, PIN verify)
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -158,11 +178,16 @@ builder.Services.AddScoped<ISupportService, SupportService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
 builder.Services.AddScoped<IAiFeedbackService, AiFeedbackService>();
 
-var encryptionKey = builder.Configuration["Encryption:AesKey"] ?? "";
-if (!string.IsNullOrEmpty(encryptionKey))
-    builder.Services.AddSingleton(new AesEncryptionService(encryptionKey));
-else
-    builder.Services.AddSingleton(new AesEncryptionService(Convert.ToBase64String(new byte[32])));
+var encryptionKey = builder.Configuration["Encryption:AesKey"];
+if (string.IsNullOrEmpty(encryptionKey))
+{
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException(
+            "Encryption:AesKey not configured. Generate one with AesEncryptionService.GenerateKey().");
+    // Dev-only fallback; keeps existing local data readable but must never reach production
+    encryptionKey = Convert.ToBase64String(new byte[32]);
+}
+builder.Services.AddSingleton(new AesEncryptionService(encryptionKey));
 
 builder.Services.AddCortexMediator([typeof(Program)]);
 
@@ -174,8 +199,13 @@ using (var scope = app.Services.CreateScope())
     context.Database.Migrate();
 }
 
-app.UseSwagger();
-app.UseSwaggerUI();
+app.UseGlobalExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseCors("AllowFrontendPolicy");
 app.UseStaticFiles();
@@ -184,6 +214,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
-app.MapControllers().RequireRateLimiting("fixed");
+app.MapControllers();
 
 app.Run();

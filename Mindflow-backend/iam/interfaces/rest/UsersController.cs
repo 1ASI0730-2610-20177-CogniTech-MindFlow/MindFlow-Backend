@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Mindflow_backend.iam.application.services;
 using Mindflow_backend.iam.domain.model.commands;
 using Mindflow_backend.iam.interfaces.rest.resources;
@@ -13,6 +14,7 @@ namespace Mindflow_backend.iam.interfaces.rest;
 public class UsersController(IUserCommandService userCommandService) : ControllerBase
 {
     [HttpPost("sign-up")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> SignUp([FromBody] SignUpResource resource)
     {
         var command = SignUpCommandFromResourceAssembler.ToCommandFromResource(resource);
@@ -26,6 +28,7 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
     }
 
     [HttpPost("sign-in")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> SignIn([FromBody] SignInResource resource)
     {
         var command = new SignInCommand(resource.Email, resource.Password);
@@ -39,6 +42,7 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
     }
 
     [HttpPost("google-auth")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> GoogleAuth([FromBody] GoogleAuthResource resource)
     {
         var command = new GoogleAuthCommand(resource.Credential);
@@ -52,6 +56,7 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
     }
 
     [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordResource resource)
     {
         var command = new ForgotPasswordCommand(resource.Email);
@@ -60,6 +65,7 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
     }
 
     [HttpPost("reset-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordResource resource)
     {
         var command = new ResetPasswordCommand(resource.Token, resource.NewPassword);
@@ -125,6 +131,7 @@ public class UsersController(IUserCommandService userCommandService) : Controlle
 
     [HttpPost("pin/verify")]
     [Authorize]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> VerifyPin([FromBody] VerifyPinResource resource)
     {
         var userId = int.Parse(User.FindFirst("user_id")!.Value);
