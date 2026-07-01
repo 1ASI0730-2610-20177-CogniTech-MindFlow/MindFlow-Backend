@@ -12,9 +12,14 @@ public class GetMediaHandler(AppDbContext dbContext)
 {
     public async Task<Result<IEnumerable<MediaDto>>> Handle(GetMediaQuery request, CancellationToken ct)
     {
-        var media = await dbContext.Media
+        var query = dbContext.Media
             .AsNoTracking()
-            .Where(m => m.EntryId == request.EntryId)
+            .Where(m => m.Entry.UserId == request.UserId);
+
+        if (request.EntryId.HasValue)
+            query = query.Where(m => m.EntryId == request.EntryId.Value);
+
+        var media = await query
             .Select(m => new MediaDto
             {
                 Id = m.Id,

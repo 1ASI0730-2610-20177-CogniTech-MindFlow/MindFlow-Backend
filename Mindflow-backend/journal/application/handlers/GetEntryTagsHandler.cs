@@ -12,7 +12,8 @@ public class GetEntryTagsHandler(AppDbContext dbContext)
 {
     public async Task<Result<IEnumerable<EntryTagDto>>> Handle(GetEntryTagsQuery request, CancellationToken ct)
     {
-        var query = dbContext.EntryTags.AsNoTracking().AsQueryable();
+        var query = dbContext.EntryTags.AsNoTracking()
+            .Where(et => et.Entry.UserId == request.UserId);
 
         if (request.EntryId.HasValue)
             query = query.Where(et => et.EntryId == request.EntryId.Value);

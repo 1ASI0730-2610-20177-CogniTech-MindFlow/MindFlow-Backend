@@ -33,6 +33,9 @@ public class CloudinaryFileStorageService(IConfiguration configuration) : IFileS
         var apiKey = configuration["Cloudinary:ApiKey"];
         var apiSecret = configuration["Cloudinary:ApiSecret"];
 
+        if (string.IsNullOrWhiteSpace(cloudName) || string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(apiSecret))
+            throw new InvalidOperationException("El almacenamiento de archivos no está configurado (Cloudinary).");
+
         var account = new Account(cloudName, apiKey, apiSecret);
         var cloudinary = new Cloudinary(account);
 

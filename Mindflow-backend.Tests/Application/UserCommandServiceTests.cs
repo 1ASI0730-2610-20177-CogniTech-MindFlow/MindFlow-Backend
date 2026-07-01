@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Mindflow_backend.iam.application.Internal.commandservices;
 using Mindflow_backend.iam.application.services;
@@ -19,7 +20,8 @@ public class UserCommandServiceTests
 
     private UserCommandService CreateService(AppDbContext? dbContext = null) =>
         new(_userRepo.Object, _unitOfWork.Object, _tokenService.Object,
-            dbContext!, _googleAuth.Object, _emailService.Object);
+            dbContext!, _googleAuth.Object, _emailService.Object,
+            NullLogger<UserCommandService>.Instance);
 
     [Fact]
     public async Task SignUp_WithNewEmail_ReturnsSuccess()

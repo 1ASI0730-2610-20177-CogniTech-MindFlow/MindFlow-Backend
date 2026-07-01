@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Mindflow_backend.iam.application.errors;
 using Mindflow_backend.iam.application.services;
@@ -18,8 +19,12 @@ public class UserCommandService(
     ITokenService tokenService,
     AppDbContext dbContext,
     IGoogleAuthService googleAuthService,
-    IEmailService emailService) : IUserCommandService
+    IEmailService emailService,
+    ILogger<UserCommandService> logger) : IUserCommandService
 {
+    private static string HashResetToken(string rawToken) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
+
     public async Task<Result<User>> Handle(SignUpCommand command)
     {
         if (string.IsNullOrWhiteSpace(command.Email) ||
@@ -43,7 +48,8 @@ public class UserCommandService(
         }
         catch (Exception ex)
         {
-            return Result<User>.Failure(SignUpError.UnexpectedError, $"Ocurrió un error: {ex.Message}");
+            logger.LogError(ex, "Unexpected error during sign-up.");
+            return Result<User>.Failure(SignUpError.UnexpectedError, "Ocurrió un error inesperado. Intenta de nuevo.");
         }
     }
 
@@ -75,6 +81,8 @@ public class UserCommandService(
         if (user == null)
             return Result.Failure(SignUpError.UnexpectedError, "Usuario no encontrado.");
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+
         var entryIds = await dbContext.JournalEntries
             .IgnoreQueryFilters()
             .Where(e => e.UserId == command.UserId)
@@ -83,8 +91,12 @@ public class UserCommandService(
 
         if (entryIds.Count > 0)
         {
-            await dbContext.EntryTags.Where(et => entryIds.Contains(et.EntryId)).ExecuteDeleteAsync();
-            await dbContext.Media.Where(m => entryIds.Contains(m.EntryId)).ExecuteDeleteAsync();
+            // IgnoreQueryFilters: incluye tags/media de entradas soft-deleted y evita que el
+            // filtro global genere un DELETE con subconsulta sobre la misma tabla (MySQL lo rechaza)
+            await dbContext.EntryTags.IgnoreQueryFilters()
+                .Where(et => entryIds.Contains(et.EntryId)).ExecuteDeleteAsync();
+            await dbContext.Media.IgnoreQueryFilters()
+                .Where(m => entryIds.Contains(m.EntryId)).ExecuteDeleteAsync();
             await dbContext.JournalEntries.IgnoreQueryFilters()
                 .Where(e => e.UserId == command.UserId).ExecuteDeleteAsync();
         }
@@ -126,6 +138,7 @@ public class UserCommandService(
 
         userRepository.Remove(user);
         await unitOfWork.CompleteAsync();
+        await transaction.CommitAsync();
         return Result.Success();
     }
 
@@ -172,7 +185,8 @@ public class UserCommandService(
         dbContext.PasswordResetTokens.Add(new PasswordResetToken
         {
             UserId = user.Id,
-            Token = rawToken,
+            // Only the hash is persisted; the raw token travels solely in the reset email
+            Token = HashResetToken(rawToken),
             ExpiresAt = DateTime.UtcNow.AddMinutes(15),
             Used = false
         });
@@ -192,8 +206,9 @@ public class UserCommandService(
 
     public async Task<Result> Handle(ResetPasswordCommand command)
     {
+        var tokenHash = HashResetToken(command.Token);
         var resetToken = await dbContext.PasswordResetTokens
-            .FirstOrDefaultAsync(t => t.Token == command.Token && !t.Used);
+            .FirstOrDefaultAsync(t => t.Token == tokenHash && !t.Used);
 
         if (resetToken == null || resetToken.ExpiresAt < DateTime.UtcNow)
             return Result.Failure(SignInError.InvalidCredentials, "El enlace es inválido o ha expirado.");
