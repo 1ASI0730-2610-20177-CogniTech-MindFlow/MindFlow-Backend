@@ -52,6 +52,24 @@ public sealed class AesEncryptionService
         return Encoding.UTF8.GetString(plainBytes);
     }
 
+    /// <summary>
+    ///     Decrypts a value, falling back to the raw stored string when it cannot be
+    ///     decrypted (legacy plaintext rows or data encrypted with a previous key).
+    ///     Reading must never throw: a 500 on every journal/chat read is worse than
+    ///     showing the stored value as-is.
+    /// </summary>
+    public string DecryptSafe(string cipherText)
+    {
+        try
+        {
+            return Decrypt(cipherText);
+        }
+        catch (Exception)
+        {
+            return cipherText;
+        }
+    }
+
     public static string GenerateKey()
     {
         var key = new byte[32];

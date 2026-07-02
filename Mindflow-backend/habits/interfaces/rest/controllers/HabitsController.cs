@@ -134,9 +134,17 @@ public class HabitsController : ControllerBase
 
         if (cached != null && cached.GeneratedAt > DateTimeOffset.UtcNow.AddHours(-24))
         {
-            var cachedList = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(cached.SuggestionsJson);
-            if (cachedList != null)
-                return Ok(new { suggestions = cachedList });
+            try
+            {
+                var cachedList = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(cached.SuggestionsJson);
+                if (cachedList != null)
+                    return Ok(new { suggestions = cachedList });
+            }
+            catch (JsonException)
+            {
+                // Corrupt or legacy-format cache row: discard it and regenerate below
+                await InvalidateSuggestionsCacheAsync(userId, cancellationToken);
+            }
         }
 
         var habits = await _habitQueryService.Handle(new GetAllHabitsByUserIdQuery(userId), cancellationToken);
@@ -164,7 +172,7 @@ public class HabitsController : ControllerBase
             .Select(e => e.Sentiment)
             .ToListAsync(cancellationToken);
 
-        var negativeCount = sentiments.Count(s => s.Equals("negative", StringComparison.OrdinalIgnoreCase));
+        var negativeCount = sentiments.Count(s => "negative".Equals(s, StringComparison.OrdinalIgnoreCase));
         var stressLevel = negativeCount >= 5 ? "high" : negativeCount >= 2 ? "medium" : "low";
 
         var aiResponse = await _aiService.GenerateHabitSuggestionsAsync(habitNames, completionRate, stressLevel, recentEntries);
