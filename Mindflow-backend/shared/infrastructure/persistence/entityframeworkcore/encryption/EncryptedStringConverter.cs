@@ -5,4 +5,4 @@ namespace Mindflow_backend.Shared.Infrastructure.Persistence.EntityFrameworkCore
 public sealed class EncryptedStringConverter(AesEncryptionService encryption)
     : ValueConverter<string, string>(
         v => encryption.Encrypt(v),
-        v => encryption.Decrypt(v));
+        v => encryption.DecryptSafe(v));
